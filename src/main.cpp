@@ -1,11 +1,13 @@
 #include "main.hpp"
 
-void Main::Start()
+WUPS_PLUGIN_NAME("Stardust");
+WUPS_PLUGIN_DESCRIPTION("Stardust");
+WUPS_PLUGIN_VERSION("v1.0");
+WUPS_PLUGIN_AUTHOR("Nanashi");
+WUPS_PLUGIN_LICENSE("GPLv3");
+
+INITIALIZE_PLUGIN()
 {
-
-}
-
-void Main::Update()
-{
-
+    NotificationModule_InitLibrary();
+    NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 0.1f);
 }

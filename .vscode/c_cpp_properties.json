@@ -1,14 +1,18 @@
 {
-    "configurations": [
+    "configurations":
+    [
         {
             "name": "PPC",
-            "includePath": [
+            "includePath":
+            [
                 "${workspaceFolder}/**",
-                "C:/devkitPro/libogc/include",
-                "C:/devkitPro/wups/include",
-                "C:/devkitPro/wut/include"
+                "C:/devkitPro/libogc/include/**",
+                "C:/devkitPro/wums/include/**",
+                "C:/devkitPro/wups/include/**",
+                "C:/devkitPro/wut/include/**"
             ],
-            "defines": [
+            "defines":
+            [
                 "GEKKO",
                 "__PPC__"
             ],

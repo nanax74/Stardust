@@ -19,7 +19,9 @@ main.o: D:/User/Game/WiiU/Repository/Stardust/src/main.cpp \
  C:/devkitPro/wups/include/wups/hooks.h \
  C:/devkitPro/wups/include/wups/meta.h \
  C:/devkitPro/wups/include/wups/storage.h \
- C:/devkitPro/wups/include/wups/wups_debug.h
+ C:/devkitPro/wups/include/wups/wups_debug.h \
+ C:/devkitPro/wums/include/notifications/notifications.h \
+ C:/devkitPro/wums/include/notifications/notification_defines.h
 D:/User/Game/WiiU/Repository/Stardust/src/main.hpp:
 C:/devkitPro/wups/include/wups.h:
 C:/devkitPro/wups/include/wups/common.h:
@@ -43,3 +45,5 @@ C:/devkitPro/wups/include/wups/hooks.h:
 C:/devkitPro/wups/include/wups/meta.h:
 C:/devkitPro/wups/include/wups/storage.h:
 C:/devkitPro/wups/include/wups/wups_debug.h:
+C:/devkitPro/wums/include/notifications/notifications.h:
+C:/devkitPro/wums/include/notifications/notification_defines.h:

@@ -12,6 +12,7 @@ include $(DEVKITPRO)/wups/share/wups_rules
 
 WUT_ROOT := $(DEVKITPRO)/wut
 WUPS_ROOT := $(DEVKITPRO)/wups
+WUMS_ROOT := $(DEVKITPRO)/wums
 
 #-------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -22,7 +23,8 @@ WUPS_ROOT := $(DEVKITPRO)/wups
 #-------------------------------------------------------------------------------
 TARGET		:=	Stardust
 BUILD		:=	build
-SOURCES		:=	src
+SOURCES		:=	src \
+				src/patcher
 DATA		:=	data
 INCLUDES	:=	include
 
@@ -39,13 +41,13 @@ CXXFLAGS	:= $(CFLAGS)
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS)
 
-LIBS	:= -lwups -lwut
+LIBS	:= -lwups -lwut -lnotifications
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT)
+LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT)
 
 #-------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

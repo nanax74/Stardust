@@ -1,4 +1,5 @@
-init.o: D:/User/Game/WiiU/Repository/Stardust/src/init.cpp \
+VPADRead.o: \
+ D:/User/Game/WiiU/Repository/Stardust/src/patcher/VPADRead.cpp \
  D:/User/Game/WiiU/Repository/Stardust/src/main.hpp \
  C:/devkitPro/wups/include/wups.h C:/devkitPro/wups/include/wups/common.h \
  C:/devkitPro/wups/include/wups/config.h \
@@ -19,7 +20,10 @@ init.o: D:/User/Game/WiiU/Repository/Stardust/src/init.cpp \
  C:/devkitPro/wups/include/wups/hooks.h \
  C:/devkitPro/wups/include/wups/meta.h \
  C:/devkitPro/wups/include/wups/storage.h \
- C:/devkitPro/wups/include/wups/wups_debug.h
+ C:/devkitPro/wups/include/wups/wups_debug.h \
+ C:/devkitPro/wums/include/notifications/notifications.h \
+ C:/devkitPro/wums/include/notifications/notification_defines.h \
+ D:/User/Game/WiiU/Repository/Stardust/src/patcher/VPADRead.hpp
 D:/User/Game/WiiU/Repository/Stardust/src/main.hpp:
 C:/devkitPro/wups/include/wups.h:
 C:/devkitPro/wups/include/wups/common.h:
@@ -43,3 +47,6 @@ C:/devkitPro/wups/include/wups/hooks.h:
 C:/devkitPro/wups/include/wups/meta.h:
 C:/devkitPro/wups/include/wups/storage.h:
 C:/devkitPro/wups/include/wups/wups_debug.h:
+C:/devkitPro/wums/include/notifications/notifications.h:
+C:/devkitPro/wums/include/notifications/notification_defines.h:
+D:/User/Game/WiiU/Repository/Stardust/src/patcher/VPADRead.hpp:

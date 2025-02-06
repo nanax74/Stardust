@@ -1,13 +1,8 @@
 #ifndef MAIN
 #define MAIN
 
+#include <string>
 #include <wups.h>
-
-class Main
-{
-public:
-    static void Start();
-    static void Update();
-};
+#include <notifications/notifications.h>
 
 #endif // MAIN
