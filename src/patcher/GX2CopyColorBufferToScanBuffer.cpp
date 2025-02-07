@@ -36,7 +36,7 @@ void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2Scan
     float g = rgb.g / 255;
     float b = rgb.b / 255;
     GX2ClearColor(colorBuffer, r, g, b, 1.0f); // 色を設定
-    /*
+    
     // 三角形の頂点データ
     float vertices[] =
     {
@@ -50,5 +50,4 @@ void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2Scan
     GX2SetViewport(0.0f, 0.0f, colorBuffer->surface.width, colorBuffer->surface.height, 0.0f, 1.0f); // ビューポートを設定
 
     GX2DrawEx(GX2_PRIMITIVE_MODE_TRIANGLES, 3, 0, 1); // 三角形を描画
-    */
 }
