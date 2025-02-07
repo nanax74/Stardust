@@ -1,5 +1,9 @@
 #include "../main.hpp"
 #include "GX2CopyColorBufferToScanBuffer.hpp"
+#include "shaders/ColorShaderGX2.h"
+
+uint8_t *colorVtxs;
+bool colorVtxsDirty;
 
 bool GX2CopyColorBufferToScanBuffer::isStarted = false; // 開始フラグ
 float GX2CopyColorBufferToScanBuffer::hue = 0.0f;   // 色相の初期値を設定
@@ -21,12 +25,14 @@ WUPS_MUST_REPLACE_FOR_PROCESS(GX2CopyColorBufferToScanBuffer, WUPS_LOADER_LIBRAR
 
 void GX2CopyColorBufferToScanBuffer::Start(GX2ColorBuffer* colorBuffer, GX2ScanTarget scanTarget)
 {
-
+    // colorVtxs = (uint8_t *) MEMAllocFromMappedMemoryForGX2Ex(4 * ColorShader::cuColorAttrSize, GX2_VERTEX_BUFFER_ALIGNMENT);
+    // colorVtxsDirty = true;
 }
 
 void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2ScanTarget scanTarget)
 {
-    return;
+
+    /*
 
     hue += 1.0f;    // 色合いを1.0fずつ増やす
     if(hue >= 360.0f) hue = 0.0f; // 360.0f以上になったら0.0fに戻す
@@ -36,19 +42,36 @@ void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2Scan
     float g = rgb.g / 255;
     float b = rgb.b / 255;
     GX2ClearColor(colorBuffer, r, g, b, 1.0f); // 色を設定
-    /*
-    // 三角形の頂点データ
-    float vertices[] =
-    {
-        0.0f,  0.5f, 0.0f, // 上頂点
-       -0.5f, -0.5f, 0.0f, // 左下頂点
-        0.5f, -0.5f, 0.0f  // 右下頂点
-    };
 
-    GX2SetAttribBuffer(0, sizeof(vertices), 3 * sizeof(float), vertices); // 頂点バッファを設定
-    GX2SetColorBuffer(colorBuffer, GX2_RENDER_TARGET_0); // 描画先を設定
-    GX2SetViewport(0.0f, 0.0f, colorBuffer->surface.width, colorBuffer->surface.height, 0.0f, 1.0f); // ビューポートを設定
-
-    GX2DrawEx(GX2_PRIMITIVE_MODE_TRIANGLES, 3, 0, 1); // 三角形を描画
     */
+
+    float widthScaleFactor = 1.0f / (float)1280;
+    float heightScaleFactor = 1.0f / (float)720;
+
+    int width = 20;
+
+    glm::vec3 positionOffsets = glm::vec3(0.0f);
+
+    int x = 300;
+    int y = 300;
+
+    positionOffsets[0] = (x-((1280)/2)+(width/2)) * widthScaleFactor * 2.0f;
+    positionOffsets[1] = -(y-((720)/2)+(width/2)) * heightScaleFactor * 2.0f;
+
+    glm::vec3 scale(width*widthScaleFactor,width*heightScaleFactor,1.0f);
+
+    if (colorVtxs && colorVtxsDirty)
+    {
+        GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, colorVtxs, 4 * ColorShader::cuColorAttrSize);
+        colorVtxsDirty = false;
+    }
+
+    ColorShader::instance();
+    // ColorShader::instance()->setShaders();
+    // ColorShader::instance()->setAttributeBuffer(colorVtxs, NULL, 4);
+    // ColorShader::instance()->setAngle(0);
+    // ColorShader::instance()->setOffset(positionOffsets);
+    // ColorShader::instance()->setScale(scale);
+    // ColorShader::instance()->setColorIntensity(glm::vec4(1.0f));
+    // ColorShader::instance()->draw(GX2_PRIMITIVE_MODE_QUADS, 4);
 }
