@@ -1,8 +1,10 @@
-#ifndef MAIN
-#define MAIN
+#pragma once
 
+//std
 #include <string>
-#include <wups.h>
+
+//wums
 #include <notifications/notifications.h>
 
-#endif // MAIN
+//wups
+#include <wups.h>

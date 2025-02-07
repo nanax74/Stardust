@@ -24,7 +24,8 @@ WUMS_ROOT := $(DEVKITPRO)/wums
 TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
-				src/patcher
+				src/patcher \
+				src/class
 DATA		:=	data
 INCLUDES	:=	include
 
