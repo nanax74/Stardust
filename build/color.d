@@ -1,3 +1,3 @@
-color.o: C:/Users/Nyan/source/repos/Stardust/src/class/color.cpp \
- C:/Users/Nyan/source/repos/Stardust/src/class/color.hpp
-C:/Users/Nyan/source/repos/Stardust/src/class/color.hpp:
+color.o: C:/Users/Win11/Documents/wiiu/Stardust/src/class/color.cpp \
+ C:/Users/Win11/Documents/wiiu/Stardust/src/class/color.hpp
+C:/Users/Win11/Documents/wiiu/Stardust/src/class/color.hpp:

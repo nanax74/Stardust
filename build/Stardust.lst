@@ -272,138 +272,138 @@
 020111f0 t __do_global_ctors_aux
 02011240 T __fini
 10000510 d .LC7
-10000b94 d .LC2
-10000c88 0000000d V typeinfo name for std::bad_alloc
-10000c98 0000000c V typeinfo for std::bad_alloc
-10000ca4 00000014 V vtable for std::bad_alloc
-10000cb8 00000027 V typeinfo name for __gnu_cxx::__concurrence_lock_error
-10000ce0 0000000c V typeinfo for __gnu_cxx::__concurrence_lock_error
-10000cec 00000029 V typeinfo name for __gnu_cxx::__concurrence_unlock_error
-10000d18 0000000c V typeinfo for __gnu_cxx::__concurrence_unlock_error
-10000d24 00000014 V vtable for __gnu_cxx::__concurrence_lock_error
-10000d38 00000014 V vtable for __gnu_cxx::__concurrence_unlock_error
-10000d4c 0000000d V typeinfo name for std::exception
-10000d5c 00000020 V typeinfo name for __cxxabiv1::__forced_unwind
-10000d7c 00000024 V typeinfo name for __cxxabiv1::__foreign_exception
-10000dd4 00000025 V typeinfo name for __cxxabiv1::__si_class_type_info
-10000dfc 0000000c V typeinfo for __cxxabiv1::__si_class_type_info
-10000e08 0000002c V vtable for __cxxabiv1::__si_class_type_info
-10000e34 0000000d V typeinfo name for std::type_info
-10000e44 00000022 V typeinfo name for __cxxabiv1::__class_type_info
-10000e68 0000000c V typeinfo for __cxxabiv1::__class_type_info
-10000e74 0000002c V vtable for __cxxabiv1::__class_type_info
-10001384 00000008 d terminator.0
-1000138c 00000101 D _ctype_
-10001634 00000010 d zeroes.0
-10001644 00000010 d blanks.1
-10001678 0000000c d p05.0
-10001688 00000028 D __mprec_bigtens
-100016b0 000000c8 D __mprec_tens
-100017bc d __CTOR_LIST__
-100017c0 D __CTOR_LIST__
-100017cc D __CTOR_END__
-100017cc d __CTOR_END__
-100017d0 d __DTOR_LIST__
-100017d4 D __DTOR_LIST__
-100017e0 D __DTOR_END__
-100017e4 d __EH_FRAME_BEGIN__
-100017e4 D __EH_FRAME_BEGIN__
-100045bc D __EH_FRAME_END__
-100045bc d __FRAME_END__
-100045c0 00000004 D real_GX2CopyColorBufferToScanBuffer
-100045c4 00000004 D real_VPADRead
-100045c8 00000004 d sConfigPluginIdentifier
-100045cc 00000004 d sConfigAPIVersion
-100045d0 00000004 d sNotificationModuleVersion
-100045d8 00000120 D _impure_data
-100046f8 0000016c D __global_locale
-10004864 00000008 V typeinfo for std::exception
-1000486c 00000008 V typeinfo for __cxxabiv1::__forced_unwind
-10004874 00000008 V typeinfo for __cxxabiv1::__foreign_exception
-1000487c 00000004 D __cxxabiv1::__unexpected_handler
-10004880 00000008 V typeinfo for std::type_info
-10004888 00000004 D __cxxabiv1::__terminate_handler
-1000488c 00000004 D _impure_ptr
-10004890 00000004 D environ
-10004898 00000001 B GX2CopyColorBufferToScanBuffer::isSwap
-1000489c 00000004 B GX2CopyColorBufferToScanBuffer::hue
-100048a0 00000001 B GX2CopyColorBufferToScanBuffer::isStarted
-100048a4 00000004 B handle
-100048a8 00000001 B VPADRead::isStarted
-100048ac 00000004 B __wut_exit
-100048b0 00000001 B __eh_globals_init::_S_init
-100048b1 b completed.2
-100048b4 b dtor_idx.1
-100048b8 b object.0
-100048d0 00000001 b sConfigLibInitDone
-100048d4 00000004 b sAPIItemDestroy
-100048d8 00000004 b sAPIItemCreateEx
-100048dc 00000004 b sAPICategoryAddItem
-100048e0 00000004 b sAPICategoryAddCategory
-100048e4 00000004 b sAPICategoryDestroy
-100048e8 00000004 b sAPICategoryCreateEx
-100048ec 00000004 b sAPIInitEx
-100048f0 00000004 b sAPIGetVersion
-100048f4 00000004 b sModuleHandle
-100048f8 00000004 b __wut_socket_devoptab_added
-100048fc 00000004 b sHeapSize
-10004900 00000004 b sHeapMaxSize
-10004904 00000004 b sHeapBase
-10004908 00000004 b sHeapHandle
-1000490c 0000002c b key_mutex
-10004938 00000400 b key_table
-10004d38 00000004 b sLibcLockUsedMask
-10004d3c 000002c0 b sLibcLocks
-10004ffc 00000018 B sDefaultValues
-10005014 00000001 b sLibInitDone
-10005018 00000004 b sNMFinishDynamicNotification
-1000501c 00000004 b sNMUpdateDynamicNotificationTextColor
-10005020 00000004 b sNMUpdateDynamicNotificationBackgroundColor
-10005024 00000004 b sNMUpdateDynamicNotificationText
-10005028 00000004 b sNMAddDynamicNotificationV2
-1000502c 00000004 b sNMAddStaticNotificationV2
-10005030 00000004 b sNMAddDynamicNotification
-10005034 00000004 b sNMAddStaticNotification
-10005038 00000004 b sNMIsOverlayReady
-1000503c 00000004 b sNMGetVersion
-10005040 00000004 b sModuleHandle
-10005044 00000038 b (anonymous namespace)::emergency_pool
-1000507c 00000004 b (anonymous namespace)::__new_handler
-10005080 00000004 b init
-10005084 00000008 b (anonymous namespace)::eh_globals
-1000508c 00000004 b once_regsizes.0
-10005090 00000070 b dwarf_reg_size_table
-10005100 00000004 b once.1
-10005104 0000002c b object_mutex
-10005130 00000004 b seen_objects
-10005134 00000004 b unseen_objects
-10005138 00000150 B __sf
-10005288 00000004 b __env_recursive_mutex
-1000528c 00000004 b initial_env
-10005290 0000008e R wups_meta_info_linking_order
-10005320 0000000e R wups_meta_license
-10005330 0000000f R wups_meta_author
-10005340 0000000d R wups_meta_version
-10005350 00000015 R wups_meta_description
-10005368 0000003e R wups_meta_info_dump
-100053a8 00000009 R wups_meta_plugin_name
-100053b4 00000024 R wups_meta_buildtimestamp
-100053d8 0000000b R wups_meta_wups
-100053e4 0000000e R wups_meta_name
-100053f4 00000024 R wups_load_my_GX2CopyColorBufferToScanBuffer
-10005418 00000024 R wups_load_my_VPADRead
-1000543c 00000008 R wups_hooks_init_plugin
-10005444 00000008 R wups_hooks_wups_init_config_functions
-1000544c 00000008 R wups_hooks___fini_wrapper
-10005454 00000008 R wups_hooks___init_wrapper
-1000545c 00000008 R wups_hooks_on_fini_wut_stdcpp
-10005464 00000008 R wups_hooks_on_init_wut_stdcpp
-1000546c 00000008 R wups_hooks_on_fini_wut_newlib
-10005474 00000008 R wups_hooks_on_init_wut_newlib
-1000547c 00000008 R wups_hooks_on_fini_wut_sockets
-10005484 00000008 R wups_hooks_on_init_wut_sockets
-1000548c 00000008 R wups_hooks_on_fini_wut_malloc
-10005494 00000008 R wups_hooks_on_init_wut_malloc
+10000b88 d .LC2
+10000c7c 0000000d V typeinfo name for std::bad_alloc
+10000c8c 0000000c V typeinfo for std::bad_alloc
+10000c98 00000014 V vtable for std::bad_alloc
+10000cac 00000027 V typeinfo name for __gnu_cxx::__concurrence_lock_error
+10000cd4 0000000c V typeinfo for __gnu_cxx::__concurrence_lock_error
+10000ce0 00000029 V typeinfo name for __gnu_cxx::__concurrence_unlock_error
+10000d0c 0000000c V typeinfo for __gnu_cxx::__concurrence_unlock_error
+10000d18 00000014 V vtable for __gnu_cxx::__concurrence_lock_error
+10000d2c 00000014 V vtable for __gnu_cxx::__concurrence_unlock_error
+10000d40 0000000d V typeinfo name for std::exception
+10000d50 00000020 V typeinfo name for __cxxabiv1::__forced_unwind
+10000d70 00000024 V typeinfo name for __cxxabiv1::__foreign_exception
+10000dc8 00000025 V typeinfo name for __cxxabiv1::__si_class_type_info
+10000df0 0000000c V typeinfo for __cxxabiv1::__si_class_type_info
+10000dfc 0000002c V vtable for __cxxabiv1::__si_class_type_info
+10000e28 0000000d V typeinfo name for std::type_info
+10000e38 00000022 V typeinfo name for __cxxabiv1::__class_type_info
+10000e5c 0000000c V typeinfo for __cxxabiv1::__class_type_info
+10000e68 0000002c V vtable for __cxxabiv1::__class_type_info
+10001378 00000008 d terminator.0
+10001380 00000101 D _ctype_
+10001628 00000010 d zeroes.0
+10001638 00000010 d blanks.1
+10001668 0000000c d p05.0
+10001678 00000028 D __mprec_bigtens
+100016a0 000000c8 D __mprec_tens
+100017ac d __CTOR_LIST__
+100017b0 D __CTOR_LIST__
+100017bc D __CTOR_END__
+100017bc d __CTOR_END__
+100017c0 d __DTOR_LIST__
+100017c4 D __DTOR_LIST__
+100017d0 D __DTOR_END__
+100017d4 d __EH_FRAME_BEGIN__
+100017d4 D __EH_FRAME_BEGIN__
+100045ac D __EH_FRAME_END__
+100045ac d __FRAME_END__
+100045b0 00000004 D real_GX2CopyColorBufferToScanBuffer
+100045b4 00000004 D real_VPADRead
+100045b8 00000004 d sConfigPluginIdentifier
+100045bc 00000004 d sConfigAPIVersion
+100045c0 00000004 d sNotificationModuleVersion
+100045c8 00000120 D _impure_data
+100046e8 0000016c D __global_locale
+10004854 00000008 V typeinfo for std::exception
+1000485c 00000008 V typeinfo for __cxxabiv1::__forced_unwind
+10004864 00000008 V typeinfo for __cxxabiv1::__foreign_exception
+1000486c 00000004 D __cxxabiv1::__unexpected_handler
+10004870 00000008 V typeinfo for std::type_info
+10004878 00000004 D __cxxabiv1::__terminate_handler
+1000487c 00000004 D _impure_ptr
+10004880 00000004 D environ
+10004888 00000001 B GX2CopyColorBufferToScanBuffer::isSwap
+1000488c 00000004 B GX2CopyColorBufferToScanBuffer::hue
+10004890 00000001 B GX2CopyColorBufferToScanBuffer::isStarted
+10004894 00000004 B handle
+10004898 00000001 B VPADRead::isStarted
+1000489c 00000004 B __wut_exit
+100048a0 00000001 B __eh_globals_init::_S_init
+100048a1 b completed.2
+100048a4 b dtor_idx.1
+100048a8 b object.0
+100048c0 00000001 b sConfigLibInitDone
+100048c4 00000004 b sAPIItemDestroy
+100048c8 00000004 b sAPIItemCreateEx
+100048cc 00000004 b sAPICategoryAddItem
+100048d0 00000004 b sAPICategoryAddCategory
+100048d4 00000004 b sAPICategoryDestroy
+100048d8 00000004 b sAPICategoryCreateEx
+100048dc 00000004 b sAPIInitEx
+100048e0 00000004 b sAPIGetVersion
+100048e4 00000004 b sModuleHandle
+100048e8 00000004 b __wut_socket_devoptab_added
+100048ec 00000004 b sHeapSize
+100048f0 00000004 b sHeapMaxSize
+100048f4 00000004 b sHeapBase
+100048f8 00000004 b sHeapHandle
+100048fc 0000002c b key_mutex
+10004928 00000400 b key_table
+10004d28 00000004 b sLibcLockUsedMask
+10004d2c 000002c0 b sLibcLocks
+10004fec 00000018 B sDefaultValues
+10005004 00000001 b sLibInitDone
+10005008 00000004 b sNMFinishDynamicNotification
+1000500c 00000004 b sNMUpdateDynamicNotificationTextColor
+10005010 00000004 b sNMUpdateDynamicNotificationBackgroundColor
+10005014 00000004 b sNMUpdateDynamicNotificationText
+10005018 00000004 b sNMAddDynamicNotificationV2
+1000501c 00000004 b sNMAddStaticNotificationV2
+10005020 00000004 b sNMAddDynamicNotification
+10005024 00000004 b sNMAddStaticNotification
+10005028 00000004 b sNMIsOverlayReady
+1000502c 00000004 b sNMGetVersion
+10005030 00000004 b sModuleHandle
+10005034 00000038 b (anonymous namespace)::emergency_pool
+1000506c 00000004 b (anonymous namespace)::__new_handler
+10005070 00000004 b init
+10005074 00000008 b (anonymous namespace)::eh_globals
+1000507c 00000004 b once_regsizes.0
+10005080 00000070 b dwarf_reg_size_table
+100050f0 00000004 b once.1
+100050f4 0000002c b object_mutex
+10005120 00000004 b seen_objects
+10005124 00000004 b unseen_objects
+10005128 00000150 B __sf
+10005278 00000004 b __env_recursive_mutex
+1000527c 00000004 b initial_env
+10005280 0000008e R wups_meta_info_linking_order
+10005310 0000000e R wups_meta_license
+10005320 0000000f R wups_meta_author
+10005330 0000000d R wups_meta_version
+10005340 00000015 R wups_meta_description
+10005358 0000003e R wups_meta_info_dump
+10005398 00000009 R wups_meta_plugin_name
+100053a4 00000024 R wups_meta_buildtimestamp
+100053c8 0000000b R wups_meta_wups
+100053d4 0000000e R wups_meta_name
+100053e4 00000024 R wups_load_my_GX2CopyColorBufferToScanBuffer
+10005408 00000024 R wups_load_my_VPADRead
+1000542c 00000008 R wups_hooks_init_plugin
+10005434 00000008 R wups_hooks_wups_init_config_functions
+1000543c 00000008 R wups_hooks___fini_wrapper
+10005444 00000008 R wups_hooks___init_wrapper
+1000544c 00000008 R wups_hooks_on_fini_wut_stdcpp
+10005454 00000008 R wups_hooks_on_init_wut_stdcpp
+1000545c 00000008 R wups_hooks_on_fini_wut_newlib
+10005464 00000008 R wups_hooks_on_init_wut_newlib
+1000546c 00000008 R wups_hooks_on_fini_wut_sockets
+10005474 00000008 R wups_hooks_on_init_wut_sockets
+1000547c 00000008 R wups_hooks_on_fini_wut_malloc
+10005484 00000008 R wups_hooks_on_init_wut_malloc
 c0000038 T MEMFreeToExpHeap
 c0000040 T MEMGetSizeForMBlockExpHeap
 c0000048 T OSCompareAndSwapAtomic

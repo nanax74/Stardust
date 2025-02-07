@@ -1,5 +1,6 @@
-VPADRead.o: C:/Users/Nyan/source/repos/Stardust/src/patcher/VPADRead.cpp \
- C:/Users/Nyan/source/repos/Stardust/src/main.hpp \
+VPADRead.o: \
+ C:/Users/Win11/Documents/wiiu/Stardust/src/patcher/VPADRead.cpp \
+ C:/Users/Win11/Documents/wiiu/Stardust/src/main.hpp \
  C:/devkitPro/wums/include/notifications/notifications.h \
  C:/devkitPro/wums/include/notifications/notification_defines.h \
  C:/devkitPro/wut/include/wut.h C:/devkitPro/wut/include/wut_structsize.h \
@@ -22,15 +23,15 @@ VPADRead.o: C:/Users/Nyan/source/repos/Stardust/src/patcher/VPADRead.cpp \
  C:/devkitPro/wups/include/wups/meta.h \
  C:/devkitPro/wups/include/wups/storage.h \
  C:/devkitPro/wups/include/wups/wups_debug.h \
- C:/Users/Nyan/source/repos/Stardust/src/patcher/VPADRead.hpp \
- C:/Users/Nyan/source/repos/Stardust/src/patcher/GX2CopyColorBufferToScanBuffer.hpp \
+ C:/Users/Win11/Documents/wiiu/Stardust/src/patcher/VPADRead.hpp \
+ C:/Users/Win11/Documents/wiiu/Stardust/src/patcher/GX2CopyColorBufferToScanBuffer.hpp \
  C:/devkitPro/wut/include/gx2/swap.h C:/devkitPro/wut/include/gx2/enum.h \
  C:/devkitPro/wut/include/gx2/surface.h \
  C:/devkitPro/wut/include/gx2r/resource.h \
  C:/devkitPro/wut/include/gx2/draw.h C:/devkitPro/wut/include/gx2/clear.h \
  C:/devkitPro/wut/include/gx2/registers.h \
- C:/Users/Nyan/source/repos/Stardust/src/class/color.hpp
-C:/Users/Nyan/source/repos/Stardust/src/main.hpp:
+ C:/Users/Win11/Documents/wiiu/Stardust/src/class/color.hpp
+C:/Users/Win11/Documents/wiiu/Stardust/src/main.hpp:
 C:/devkitPro/wums/include/notifications/notifications.h:
 C:/devkitPro/wums/include/notifications/notification_defines.h:
 C:/devkitPro/wut/include/wut.h:
@@ -55,8 +56,8 @@ C:/devkitPro/wups/include/wups/hooks.h:
 C:/devkitPro/wups/include/wups/meta.h:
 C:/devkitPro/wups/include/wups/storage.h:
 C:/devkitPro/wups/include/wups/wups_debug.h:
-C:/Users/Nyan/source/repos/Stardust/src/patcher/VPADRead.hpp:
-C:/Users/Nyan/source/repos/Stardust/src/patcher/GX2CopyColorBufferToScanBuffer.hpp:
+C:/Users/Win11/Documents/wiiu/Stardust/src/patcher/VPADRead.hpp:
+C:/Users/Win11/Documents/wiiu/Stardust/src/patcher/GX2CopyColorBufferToScanBuffer.hpp:
 C:/devkitPro/wut/include/gx2/swap.h:
 C:/devkitPro/wut/include/gx2/enum.h:
 C:/devkitPro/wut/include/gx2/surface.h:
@@ -64,4 +65,4 @@ C:/devkitPro/wut/include/gx2r/resource.h:
 C:/devkitPro/wut/include/gx2/draw.h:
 C:/devkitPro/wut/include/gx2/clear.h:
 C:/devkitPro/wut/include/gx2/registers.h:
-C:/Users/Nyan/source/repos/Stardust/src/class/color.hpp:
+C:/Users/Win11/Documents/wiiu/Stardust/src/class/color.hpp:

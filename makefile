@@ -42,7 +42,7 @@ CXXFLAGS	:= $(CFLAGS)
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS)
 
-LIBS	:= -lwups -lwut -lnotifications
+LIBS	:= -lwups -lwut -lnotifications -lmappedmemory
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

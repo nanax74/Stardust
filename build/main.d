@@ -1,5 +1,5 @@
-main.o: C:/Users/Nyan/source/repos/Stardust/src/main.cpp \
- C:/Users/Nyan/source/repos/Stardust/src/main.hpp \
+main.o: C:/Users/Win11/Documents/wiiu/Stardust/src/main.cpp \
+ C:/Users/Win11/Documents/wiiu/Stardust/src/main.hpp \
  C:/devkitPro/wums/include/notifications/notifications.h \
  C:/devkitPro/wums/include/notifications/notification_defines.h \
  C:/devkitPro/wut/include/wut.h C:/devkitPro/wut/include/wut_structsize.h \
@@ -22,7 +22,7 @@ main.o: C:/Users/Nyan/source/repos/Stardust/src/main.cpp \
  C:/devkitPro/wups/include/wups/meta.h \
  C:/devkitPro/wups/include/wups/storage.h \
  C:/devkitPro/wups/include/wups/wups_debug.h
-C:/Users/Nyan/source/repos/Stardust/src/main.hpp:
+C:/Users/Win11/Documents/wiiu/Stardust/src/main.hpp:
 C:/devkitPro/wums/include/notifications/notifications.h:
 C:/devkitPro/wums/include/notifications/notification_defines.h:
 C:/devkitPro/wut/include/wut.h:
