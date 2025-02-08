@@ -28,6 +28,8 @@ void VPADRead::Update(VPADStatus status)
     if(status.trigger & VPAD_BUTTON_A)
     {
         GX2CopyColorBufferToScanBuffer::SwapScreen();
+        AXSetVoiceDeviceMix::SwapAudio();
+        NotificationModule_AddInfoNotification("ScreenSwapped!!");
     }
 
     unsigned int value = *(unsigned int*)0x106E46E8;

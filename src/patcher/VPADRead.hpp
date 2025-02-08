@@ -2,6 +2,7 @@
 
 #include <vpad/input.h>
 #include "GX2CopyColorBufferToScanBuffer.hpp"
+#include "AXSetVoiceDeviceMix.hpp"
 
 class VPADRead
 {

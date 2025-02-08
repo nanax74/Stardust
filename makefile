@@ -25,7 +25,8 @@ TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
 				src/patcher \
-				src/class
+				src/class \
+				src/shader
 DATA		:=	data
 INCLUDES	:=	include
 

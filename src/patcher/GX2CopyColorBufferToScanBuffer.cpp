@@ -14,20 +14,22 @@ DECL_FUNCTION(void, GX2CopyColorBufferToScanBuffer, GX2ColorBuffer* colorBuffer,
         GX2CopyColorBufferToScanBuffer::SetIsStarted(true);             // フラグを立てる
     }
     GX2CopyColorBufferToScanBuffer::Update(colorBuffer, scanTarget); // 繰り返し呼ばれる
-    return real_GX2CopyColorBufferToScanBuffer(colorBuffer, scanTarget); // 本来呼ばれる関数を呼び出す
+    real_GX2CopyColorBufferToScanBuffer(colorBuffer, scanTarget); // 本来呼ばれる関数を呼び出す
 }
 
 WUPS_MUST_REPLACE_FOR_PROCESS(GX2CopyColorBufferToScanBuffer, WUPS_LOADER_LIBRARY_GX2, GX2CopyColorBufferToScanBuffer, WUPS_FP_TARGET_PROCESS_ALL); // ラッパー関数と本来の関数を置き換える
 
+WHBGfxShaderGroup shaderGroup; // シェーダーグループ
+
 void GX2CopyColorBufferToScanBuffer::Start(GX2ColorBuffer* colorBuffer, GX2ScanTarget scanTarget)
 {
-
+    WHBGfxLoadGFDShaderGroup(&shaderGroup, 0, shader_gsh); // シェーダーグループをロード
+    WHBGfxInitShaderAttribute(&shaderGroup, "position", 0, 0, GX2_ATTRIB_FORMAT_FLOAT_32_32_32); // 頂点バッファの設定
+    WHBGfxInitShaderAttribute(&shaderGroup, "color", 1, 0, GX2_ATTRIB_FORMAT_FLOAT_32_32_32_32); // 色バッファの設定
 }
 
 void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2ScanTarget scanTarget)
 {
-    return;
-
     hue += 1.0f;    // 色合いを1.0fずつ増やす
     if(hue >= 360.0f) hue = 0.0f; // 360.0f以上になったら0.0fに戻す
 
@@ -35,7 +37,6 @@ void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2Scan
     float r = rgb.r / 255;
     float g = rgb.g / 255;
     float b = rgb.b / 255;
-    GX2ClearColor(colorBuffer, r, g, b, 1.0f); // 色を設定
     
     // 三角形の頂点データ
     float vertices[] =
@@ -45,7 +46,22 @@ void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2Scan
         0.5f, -0.5f, 0.0f  // 右下頂点
     };
 
+    float colors[] =
+    {
+        r, g, b,
+        r, g, b,
+        r, g, b
+    };
+
+    GX2SetVertexShader(shaderGroup.vertexShader); // シェーダーグループを設定
+    GX2SetPixelShader(shaderGroup.pixelShader); // シェーダーグループを設定
+
+    GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, vertices, sizeof(vertices)); // バッファを無効化
+    GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, colors, sizeof(colors)); // バッファを無効化
+
     GX2SetAttribBuffer(0, sizeof(vertices), 3 * sizeof(float), vertices); // 頂点バッファを設定
+    GX2SetAttribBuffer(1, sizeof(colors), 3 * sizeof(float), colors); // 色バッファを設定
+
     GX2SetColorBuffer(colorBuffer, GX2_RENDER_TARGET_0); // 描画先を設定
     GX2SetViewport(0.0f, 0.0f, colorBuffer->surface.width, colorBuffer->surface.height, 0.0f, 1.0f); // ビューポートを設定
 
