@@ -23,9 +23,7 @@ WHBGfxShaderGroup shaderGroup; // シェーダーグループ
 
 void GX2CopyColorBufferToScanBuffer::Start(GX2ColorBuffer* colorBuffer, GX2ScanTarget scanTarget)
 {
-    WHBGfxLoadGFDShaderGroup(&shaderGroup, 0, shader_gsh); // シェーダーグループをロード
-    WHBGfxInitShaderAttribute(&shaderGroup, "position", 0, 0, GX2_ATTRIB_FORMAT_FLOAT_32_32_32); // 頂点バッファの設定
-    WHBGfxInitShaderAttribute(&shaderGroup, "color", 1, 0, GX2_ATTRIB_FORMAT_FLOAT_32_32_32_32); // 色バッファの設定
+
 }
 
 void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2ScanTarget scanTarget)
@@ -38,32 +36,9 @@ void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2Scan
     float g = rgb.g / 255;
     float b = rgb.b / 255;
     
-    // 三角形の頂点データ
-    float vertices[] =
-    {
-        0.0f,  0.5f, 0.0f, // 上頂点
-       -0.5f, -0.5f, 0.0f, // 左下頂点
-        0.5f, -0.5f, 0.0f  // 右下頂点
-    };
+    GuiText guiText("Hello World!!", 24, glm::vec4(r, g, b, 1.0f));
 
-    float colors[] =
-    {
-        r, g, b,
-        r, g, b,
-        r, g, b
-    };
+    CVideo video(-1, -1);
 
-    GX2SetVertexShader(shaderGroup.vertexShader); // シェーダーグループを設定
-    GX2SetPixelShader(shaderGroup.pixelShader); // シェーダーグループを設定
-
-    GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, vertices, sizeof(vertices)); // バッファを無効化
-    GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, colors, sizeof(colors)); // バッファを無効化
-
-    GX2SetAttribBuffer(0, sizeof(vertices), 3 * sizeof(float), vertices); // 頂点バッファを設定
-    GX2SetAttribBuffer(1, sizeof(colors), 3 * sizeof(float), colors); // 色バッファを設定
-
-    GX2SetColorBuffer(colorBuffer, GX2_RENDER_TARGET_0); // 描画先を設定
-    GX2SetViewport(0.0f, 0.0f, colorBuffer->surface.width, colorBuffer->surface.height, 0.0f, 1.0f); // ビューポートを設定
-
-    GX2DrawEx(GX2_PRIMITIVE_MODE_TRIANGLES, 3, 0, 1); // 三角形を描画
+    guiText.draw(&video);
 }

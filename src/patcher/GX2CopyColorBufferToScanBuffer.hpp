@@ -7,6 +7,11 @@
 #include <gx2/clear.h>
 #include <gx2/registers.h>
 #include <whb/gfx.h>
+
+// libgui
+#include <gui/GuiText.h>
+#include <gui/video/CVideo.h>
+
 #include "../class/color.hpp"
 #include "../shader/shader.hpp"
 
