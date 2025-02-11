@@ -36,9 +36,11 @@ void GX2CopyColorBufferToScanBuffer::Update(GX2ColorBuffer* colorBuffer, GX2Scan
     float g = rgb.g / 255;
     float b = rgb.b / 255;
     
+    /*
     GuiText guiText("Hello World!!", 24, glm::vec4(r, g, b, 1.0f));
 
     CVideo video(-1, -1);
 
     guiText.draw(&video);
+    */
 }
