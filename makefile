@@ -10,9 +10,18 @@ TOPDIR ?= $(CURDIR)
 
 include $(DEVKITPRO)/wups/share/wups_rules
 
+PORTLIBS := $(DEVKITPRO)/portlibs/ppc
+
 WUT_ROOT := $(DEVKITPRO)/wut
 WUPS_ROOT := $(DEVKITPRO)/wups
 WUMS_ROOT := $(DEVKITPRO)/wums
+
+USR_ROOT := $(WUT_ROOT)/usr
+
+#-------------------------------------------------------------------------------
+# Library include path
+#-------------------------------------------------------------------------------
+LIB_INC := $(PORTLIBS)/include
 
 #-------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -25,8 +34,7 @@ TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
 				src/patcher \
-				src/class \
-				src/shader
+				src/tcp
 DATA		:=	data
 INCLUDES	:=	include
 
@@ -49,7 +57,7 @@ LIBS	:= -lwups -lwut -lnotifications
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT)
+LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT) $(USR_ROOT)
 
 #-------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -91,8 +99,8 @@ export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
 export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
+			-I$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+			-I$(CURDIR)/$(BUILD) -I$(LIB_INC)
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
