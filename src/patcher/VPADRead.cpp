@@ -1,39 +1,28 @@
-#include "../main.hpp"
 #include "VPADRead.hpp"
-
-bool VPADRead::isStarted = false;
 
 DECL_FUNCTION(unsigned int, VPADRead, VPADChan chan, VPADStatus* status, unsigned int count, VPADReadError* error)
 {
-    if(!VPADRead::GetIsStarted())
+    static bool isStarted = false;
+    if(!isStarted)
     {
-        VPADRead::Start(*status);
-        VPADRead::SetIsStarted(true);
+        VPAD::Start(*status);
+        isStarted = true;
     }
-    VPADRead::Update(*status);
+    VPAD::Update(*status);
     return real_VPADRead(chan, status, count, error);
 }
 
 WUPS_MUST_REPLACE_FOR_PROCESS(VPADRead, WUPS_LOADER_LIBRARY_VPAD, VPADRead, WUPS_FP_TARGET_PROCESS_ALL);
 
-NotificationModuleHandle handle;
-
-void VPADRead::Start(VPADStatus status)
+namespace VPAD
 {
-    NotificationModule_AddDynamicNotificationEx("Text", &handle, {0, 0, 0, 255}, {255, 255, 255, 255}, nullptr, nullptr, false);
-}
-
-void VPADRead::Update(VPADStatus status)
-{
-    if(status.trigger & VPAD_BUTTON_A)
+    void Start(VPADStatus status)
     {
-        GX2CopyColorBufferToScanBuffer::SwapScreen();
-        AXSetVoiceDeviceMix::SwapAudio();
-        NotificationModule_AddInfoNotification("ScreenSwapped!!");
+        TCPServer::Start();
     }
-
-    unsigned int value = *(unsigned int*)0x106E46E8;
-    char str[9];
-    sprintf(str, "%08X", value);
-    NotificationModule_UpdateDynamicNotificationText(handle, str);
+    
+    void Update(VPADStatus status)
+    {
+        TCPServer::Update();
+    }
 }

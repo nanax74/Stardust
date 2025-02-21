@@ -34,8 +34,7 @@ TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
 				src/patcher \
-				src/class \
-				src/shader
+				src/tcp
 DATA		:=	data
 INCLUDES	:=	include
 
@@ -52,7 +51,7 @@ CXXFLAGS	:= $(CFLAGS)
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS)
 
-LIBS	:= -lwups -lgui -lwut -lfreetype -lnotifications
+LIBS	:= -lwups -lwut -lnotifications
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

@@ -4,12 +4,9 @@
             "name": "PPC",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/devkitPro/portlibs/ppc/include",
-                "C:/devkitPro/libogc/include",
                 "C:/devkitPro/wums/include",
                 "C:/devkitPro/wups/include",
-                "C:/devkitPro/wut/include",
-                "C:/devkitPro/wut/usr/include"
+                "C:/devkitPro/wut/include"
             ],
             "defines": [
                 "GEKKO",
