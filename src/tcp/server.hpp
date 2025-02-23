@@ -2,6 +2,7 @@
 
 #include <coreinit/memdefaultheap.h> // メモリ操作に必要
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <whb/log.h>
@@ -20,10 +21,11 @@
 namespace TCPServer
 {
     void Init();
+    void Deinit();
     void Thread(std::stop_token token);
     void Start();
     void Update();
-    void Stop();
+    void End();
     void AcceptClient();
     void ReceiveData();
     void SendData(unsigned char* buffer, int length);

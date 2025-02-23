@@ -34,7 +34,8 @@ TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
 				src/patcher \
-				src/tcp
+				src/tcp \
+				src/utils
 DATA		:=	data
 INCLUDES	:=	include
 

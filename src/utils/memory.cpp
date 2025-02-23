@@ -6,6 +6,7 @@ unsigned char ReadUInt8(unsigned int address)
     {
         return *(unsigned char*)address;
     }
+    return 0;
 }
 
 unsigned short ReadUInt16(unsigned int address)
@@ -14,6 +15,7 @@ unsigned short ReadUInt16(unsigned int address)
     {
         return *(unsigned short*)address;
     }
+    return 0;
 }
 
 unsigned int ReadUInt32(unsigned int address)
@@ -22,4 +24,5 @@ unsigned int ReadUInt32(unsigned int address)
     {
         return *(unsigned int*)address;
     }
+    return 0;
 }

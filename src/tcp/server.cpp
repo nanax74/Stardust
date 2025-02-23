@@ -4,18 +4,28 @@ using namespace std;
 
 namespace TCPServer
 {
-    jthread tcpServer;
+    #define TCP_PORT 10000  // クライアント側はこのポートで接続する
 
-    int serverSocket;
-    int clientSocket = -1; // 初期値を-1に設定
-    unsigned int hostIpAddress = 0;
+    jthread tcpServer;  // TCPサーバー用のスレッド
 
+    int serverSocket = -1; // サーバー側のソケット
+    int clientSocket = -1; // クライアント側のソケット
+    unsigned int hostIpAddress = 0; // WiiUのIPアドレスを格納する変数
+
+    // 初期化
     void Init()
     {
         Start();
         tcpServer = jthread(Thread);
     }
 
+    // 初期化解除
+    void Deinit()
+    {
+        End();
+    }
+
+    // スレッド
     void Thread(stop_token token)
     {
         while (!token.stop_requested())
@@ -24,7 +34,8 @@ namespace TCPServer
             this_thread::sleep_for(chrono::milliseconds(1000 / 60));
         }
     }
-    
+
+    // ネットを初期化しIPアドレスを取得
     void InitSocketFunctionPointers()
     {
         WHBLogPrintf("Initializing network functions");
@@ -34,6 +45,7 @@ namespace TCPServer
         WHBLogPrintf("Network functions initialized");
     }
 
+    // 開始
     void Start()
     {
         WHBLogPrintf("Starting TCP server");
@@ -47,15 +59,11 @@ namespace TCPServer
         }
         WHBLogPrintf("Socket created");
 
-        // 非ブロッキングモードに設定
-        int flags = fcntl(serverSocket, F_GETFL, 0);
-        fcntl(serverSocket, F_SETFL, flags | O_NONBLOCK);
-
         // IPアドレスやポート番号を設定
         sockaddr_in serverAddr;
         memset(&serverAddr, 0, sizeof(serverAddr));
         serverAddr.sin_family = AF_INET;
-        serverAddr.sin_port = htons(7000);
+        serverAddr.sin_port = htons(TCP_PORT);
         serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
         if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
@@ -74,18 +82,20 @@ namespace TCPServer
 
         char ipStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &hostIpAddress, ipStr, INET_ADDRSTRLEN);
-        WHBLogPrintf("Server started on IP: %s, port: 7000\n", ipStr);
+        WHBLogPrintf("Server started on IP: %s, port: %d\n", ipStr, TCP_PORT);
     }
 
+    // 更新
     void Update()
     {
         AcceptClient();
         ReceiveData();
     }
 
-    void Stop()
+    // 終了
+    void End()
     {
-        WHBLogPrintf("Stopping TCP server");
+        WHBLogPrintf("Ending TCP server");
 
         tcpServer.request_stop();
 
@@ -96,56 +106,56 @@ namespace TCPServer
         }
         close(serverSocket);
 
-        WHBLogPrintf("Server stopped");
+        WHBLogPrintf("Server ended");
     }
 
+    // クライアントの接続待機
     void AcceptClient()
     {
         if (clientSocket == -1)
         {
             WHBLogPrintf("Waiting to accept client");
             clientSocket = accept(serverSocket, NULL, NULL);
-            if (clientSocket < 0)
-            {
-                if (errno != EWOULDBLOCK && errno != EAGAIN)
-                {
-                    WHBLogPrintf("Failed to accept client\n");
-                }
-                return;
-            }
             WHBLogPrintf("Client connected");
-
-            // クライアントソケットも非ブロッキングモードに設定
-            int flags = fcntl(clientSocket, F_GETFL, 0);
-            fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK);
         }
     }
 
+    // データ受信
     void ReceiveData()
     {
         if (clientSocket != -1)
         {
-            unsigned char buffer[1024]; // 1KBまで受け取れる
+            // 読み取り可能なバイト数を先に取得
+            int bytesAvaliable;
+            if(ioctl(clientSocket, FIONREAD, &bytesAvaliable) < 0)
+            {
+                WHBLogPrintf("Failed to get available bytes\n");
+                return;
+            }
 
-            int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-            
-            if (bytesReceived > 0)
+            // 読み取り可能なバイトがあれば受け取る
+            if(bytesAvaliable > 0)
             {
-                ProcessCommand(buffer, bytesReceived);
+                vector<unsigned char> buffer(bytesAvaliable);
+
+                int bytesReceived = recv(clientSocket, buffer.data(), sizeof(buffer), 0);
+                
+                ProcessCommand(buffer.data(), bytesReceived);
             }
-            else if (bytesReceived == 0)
+            else
             {
-                WHBLogPrintf("Client disconnected");
-                close(clientSocket);
-                clientSocket = -1;
-            }
-            else if (bytesReceived < 0 && errno != EWOULDBLOCK && errno != EAGAIN)
-            {
-                WHBLogPrintf("Failed to receive data\n");
+                int bytesReceived = recv(clientSocket, NULL, 0, 0);
+                if(bytesReceived == 0)
+                {
+                    WHBLogPrintf("Client disconnected");
+                    close(clientSocket);
+                    clientSocket = -1;
+                }
             }
         }
     }
 
+    // データ送信
     void SendData(unsigned char* buffer, int length)
     {
         // クライアントが接続されていたらデータを送信
