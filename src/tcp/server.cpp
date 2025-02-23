@@ -1,12 +1,30 @@
 #include "server.hpp"
-#include <fcntl.h> // 非ブロッキングソケットの設定に必要
+
+using namespace std;
 
 namespace TCPServer
 {
+    jthread tcpServer;
+
     int serverSocket;
-    int clientSocket;
+    int clientSocket = -1; // 初期値を-1に設定
     unsigned int hostIpAddress = 0;
 
+    void Init()
+    {
+        Start();
+        tcpServer = jthread(Thread);
+    }
+
+    void Thread(stop_token token)
+    {
+        while (!token.stop_requested())
+        {
+            Update();
+            this_thread::sleep_for(chrono::milliseconds(1000 / 60));
+        }
+    }
+    
     void InitSocketFunctionPointers()
     {
         WHBLogPrintf("Initializing network functions");
@@ -61,7 +79,6 @@ namespace TCPServer
 
     void Update()
     {
-        WHBLogPrintf("Update called");
         AcceptClient();
         ReceiveData();
     }
@@ -69,47 +86,72 @@ namespace TCPServer
     void Stop()
     {
         WHBLogPrintf("Stopping TCP server");
-        close(clientSocket);
+
+        tcpServer.request_stop();
+
+        if (clientSocket != -1)
+        {
+            close(clientSocket);
+            clientSocket = -1; // クライアントソケットをリセット
+        }
         close(serverSocket);
+
         WHBLogPrintf("Server stopped");
     }
 
     void AcceptClient()
     {
-        WHBLogPrintf("Waiting to accept client");
-        clientSocket = accept(serverSocket, NULL, NULL);
-        if (clientSocket < 0)
+        if (clientSocket == -1)
         {
-            if (errno != EWOULDBLOCK && errno != EAGAIN)
+            WHBLogPrintf("Waiting to accept client");
+            clientSocket = accept(serverSocket, NULL, NULL);
+            if (clientSocket < 0)
             {
-                WHBLogPrintf("Failed to accept client\n");
+                if (errno != EWOULDBLOCK && errno != EAGAIN)
+                {
+                    WHBLogPrintf("Failed to accept client\n");
+                }
+                return;
             }
-            return;
-        }
-        WHBLogPrintf("Client connected");
+            WHBLogPrintf("Client connected");
 
-        // クライアントソケットも非ブロッキングモードに設定
-        int flags = fcntl(clientSocket, F_GETFL, 0);
-        fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK);
+            // クライアントソケットも非ブロッキングモードに設定
+            int flags = fcntl(clientSocket, F_GETFL, 0);
+            fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK);
+        }
     }
 
     void ReceiveData()
     {
-        char buffer[1024];
-        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-        if (bytesReceived > 0)
+        if (clientSocket != -1)
         {
-            buffer[bytesReceived] = '\0';
-            WHBLogPrintf("Received: %s\n", buffer);
-        }
-        else if (bytesReceived < 0 && errno != EWOULDBLOCK && errno != EAGAIN)
-        {
-            WHBLogPrintf("Failed to receive data\n");
+            unsigned char buffer[1024]; // 1KBまで受け取れる
+
+            int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+            
+            if (bytesReceived > 0)
+            {
+                ProcessCommand(buffer, bytesReceived);
+            }
+            else if (bytesReceived == 0)
+            {
+                WHBLogPrintf("Client disconnected");
+                close(clientSocket);
+                clientSocket = -1;
+            }
+            else if (bytesReceived < 0 && errno != EWOULDBLOCK && errno != EAGAIN)
+            {
+                WHBLogPrintf("Failed to receive data\n");
+            }
         }
     }
 
-    void SendData(const char* data)
+    void SendData(unsigned char* buffer, int length)
     {
-        send(clientSocket, data, strlen(data), 0);
+        // クライアントが接続されていたらデータを送信
+        if (clientSocket != -1)
+        {
+            send(clientSocket, buffer, length, 0);
+        }
     }
 }

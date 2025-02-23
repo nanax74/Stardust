@@ -2,6 +2,7 @@
 
 //std
 #include <string>
+#include <map>
 
 //wums
 #include <notifications/notifications.h>

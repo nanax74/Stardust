@@ -1,4 +1,5 @@
 #include "main.hpp"
+#include "tcp/server.hpp"
 
 WUPS_PLUGIN_NAME("Stardust");
 WUPS_PLUGIN_DESCRIPTION("Stardust");
@@ -11,4 +12,5 @@ INITIALIZE_PLUGIN()
     WHBLogUdpInit();
     NotificationModule_InitLibrary();
     NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 5.0f);
+    TCPServer::Init();
 }

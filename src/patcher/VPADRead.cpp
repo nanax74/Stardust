@@ -18,11 +18,11 @@ namespace VPAD
 {
     void Start(VPADStatus status)
     {
-        TCPServer::Start();
+        
     }
     
     void Update(VPADStatus status)
     {
-        TCPServer::Update();
+
     }
 }
