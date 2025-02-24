@@ -18,6 +18,7 @@
 #include <thread>
 #include <chrono>
 #include "command.hpp"
+#include "data.hpp"
 #include "../utils/bytes.hpp"
 
 namespace TCPServer
@@ -30,6 +31,4 @@ namespace TCPServer
     void End();
     void AcceptClient();
     void ReceiveFromClient();
-    void SendData(int socket, const bytes& data);
-    bytes ReceiveData(int socket);
 }

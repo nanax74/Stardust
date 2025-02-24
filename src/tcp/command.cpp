@@ -2,6 +2,7 @@
 
 using namespace std;
 using namespace memory;
+using namespace data;
 
 #define DATA_HEDDER 1   // ヘッダーの大きさ
 
