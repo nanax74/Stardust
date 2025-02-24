@@ -123,9 +123,17 @@ namespace TCPServer
 
                 unsigned int startAddress = *(unsigned int*)buffer;  // バッファから読み取るアドレスを取得
                 unsigned int endAddress = *(unsigned int*)(buffer + 4);  // バッファから読み取るアドレスを取得
-                int readSize = endAddress - startAddress;
 
-                unsigned char response[readSize];
+                if (startAddress >= endAddress)
+                {
+                    ResponseFailed();
+                    break;
+                }
+
+                int readSize = endAddress - startAddress;
+                int responseSize = 1 + readSize;
+
+                unsigned char response[responseSize] = {RESPONSE_VALUE};   // ヘッダー + 値
 
                 for(int i = 0; i < readSize; i++)
                 {
@@ -141,8 +149,7 @@ namespace TCPServer
                         break;
                     }
                 }
-                response[0] = RESPONSE_VALUE;
-                SendData(response, readSize);
+                SendData(response, responseSize);
                 break;
             }
             default:

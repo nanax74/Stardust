@@ -17,5 +17,6 @@ INITIALIZE_PLUGIN()
 
 DEINITIALIZE_PLUGIN()
 {
+    WHBLogPrintf("Deinit");
     TCPServer::Deinit();
 }

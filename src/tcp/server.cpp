@@ -104,7 +104,12 @@ namespace TCPServer
             close(clientSocket);
             clientSocket = -1; // クライアントソケットをリセット
         }
-        close(serverSocket);
+
+        if (serverSocket != -1)
+        {
+            close(serverSocket);
+            serverSocket = -1;  // サーバーソケットをリセット
+        }
 
         WHBLogPrintf("Server ended");
     }
@@ -125,31 +130,39 @@ namespace TCPServer
     {
         if (clientSocket != -1)
         {
-            // 読み取り可能なバイト数を先に取得
-            int bytesAvaliable;
-            if(ioctl(clientSocket, FIONREAD, &bytesAvaliable) < 0)
+            // 読み取り可能なバイト数を取得
+            int bytesAvailable;
+            if (ioctl(clientSocket, FIONREAD, &bytesAvailable) < 0)
             {
                 WHBLogPrintf("Failed to get available bytes\n");
                 return;
             }
 
-            // 読み取り可能なバイトがあれば受け取る
-            if(bytesAvaliable > 0)
+            if (bytesAvailable > 0)
             {
-                vector<unsigned char> buffer(bytesAvaliable);
+                vector<unsigned char> buffer(bytesAvailable);
 
-                int bytesReceived = recv(clientSocket, buffer.data(), sizeof(buffer), 0);
-                
+                int bytesReceived = recv(clientSocket, buffer.data(), bytesAvailable, 0);
+                WHBLogPrintf("Bytes Received:%d", bytesReceived);
                 ProcessCommand(buffer.data(), bytesReceived);
             }
             else
             {
-                int bytesReceived = recv(clientSocket, NULL, 0, 0);
-                if(bytesReceived == 0)
+                // recvを呼び出してクライアントの切断を確認
+                char temp;
+                int bytesReceived = recv(clientSocket, &temp, 1, MSG_PEEK);
+
+                if (bytesReceived == 0)
                 {
+                    // クライアントが切断された
                     WHBLogPrintf("Client disconnected");
                     close(clientSocket);
                     clientSocket = -1;
+                }
+                else if (bytesReceived < 0)
+                {
+                    // recvがエラーを返し、かつ EWOULDBLOCK / EAGAIN 以外なら切断とみなす
+                    WHBLogPrintf("errno:%d, bytesReceived:%d", errno, bytesReceived);
                 }
             }
         }
