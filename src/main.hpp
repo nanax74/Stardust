@@ -3,6 +3,7 @@
 //std
 #include <string>
 #include <map>
+#include <vector>
 
 //wums
 #include <notifications/notifications.h>

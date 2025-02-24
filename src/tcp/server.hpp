@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../main.hpp"
 #include <coreinit/memdefaultheap.h> // メモリ操作に必要
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -8,6 +9,7 @@
 #include <whb/log.h>
 #include <nn/ac.h>
 #include <unistd.h>
+#include <algorithm>
 #include <cstring>
 #include <fcntl.h> // 非ブロッキングソケットの設定に必要
 #include <sstream>
@@ -15,8 +17,8 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
-#include "../main.hpp"
 #include "command.hpp"
+#include "../utils/bytes.hpp"
 
 namespace TCPServer
 {
@@ -27,6 +29,7 @@ namespace TCPServer
     void Update();
     void End();
     void AcceptClient();
-    void ReceiveData();
-    void SendData(unsigned char* buffer, int length);
+    void ReceiveFromClient();
+    void SendData(int socket, const bytes& data);
+    bytes ReceiveData(int socket);
 }

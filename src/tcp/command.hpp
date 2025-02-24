@@ -2,9 +2,10 @@
 
 #include "server.hpp"
 #include "../utils/memory.hpp"
+#include "../utils/bytes.hpp"
 #include "../main.hpp"
 
 namespace TCPServer
 {
-    void ProcessCommand(unsigned char* buffer, int length);
+    void ProcessCommand(int socket, bytes& data);
 }

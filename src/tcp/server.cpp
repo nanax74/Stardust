@@ -89,7 +89,7 @@ namespace TCPServer
     void Update()
     {
         AcceptClient();
-        ReceiveData();
+        ReceiveFromClient();
     }
 
     // 終了
@@ -125,56 +125,64 @@ namespace TCPServer
         }
     }
 
-    // データ受信
-    void ReceiveData()
+    void ReceiveFromClient()
     {
-        if (clientSocket != -1)
+        bytes data = ReceiveData(clientSocket);
+        ProcessCommand(clientSocket, data);
+    }
+
+    // データ送信関数
+    void SendData(int socket, const bytes& data)
+    {
+        // データの長さを送信
+        int dataLength = data.size();
+        int lengthSent = send(socket, reinterpret_cast<const char*>(&dataLength), sizeof(dataLength), 0);
+        if (lengthSent == -1)
         {
-            // 読み取り可能なバイト数を取得
-            int bytesAvailable;
-            if (ioctl(clientSocket, FIONREAD, &bytesAvailable) < 0)
+            WHBLogPrintf("Failed to send data length.");
+            return;
+        }
+
+        // データ本体を送信
+        int totalSent = 0;
+        while (totalSent < dataLength)
+        {
+            int sent = send(socket, reinterpret_cast<const char*>(data.data()) + totalSent, min(4096, dataLength - totalSent), 0);
+            if (sent == -1)
             {
-                WHBLogPrintf("Failed to get available bytes\n");
+                WHBLogPrintf("Failed to send data.");
                 return;
             }
-
-            if (bytesAvailable > 0)
-            {
-                vector<unsigned char> buffer(bytesAvailable);
-
-                int bytesReceived = recv(clientSocket, buffer.data(), bytesAvailable, 0);
-                WHBLogPrintf("Bytes Received:%d", bytesReceived);
-                ProcessCommand(buffer.data(), bytesReceived);
-            }
-            else
-            {
-                // recvを呼び出してクライアントの切断を確認
-                char temp;
-                int bytesReceived = recv(clientSocket, &temp, 1, MSG_PEEK);
-
-                if (bytesReceived == 0)
-                {
-                    // クライアントが切断された
-                    WHBLogPrintf("Client disconnected");
-                    close(clientSocket);
-                    clientSocket = -1;
-                }
-                else if (bytesReceived < 0)
-                {
-                    // recvがエラーを返し、かつ EWOULDBLOCK / EAGAIN 以外なら切断とみなす
-                    WHBLogPrintf("errno:%d, bytesReceived:%d", errno, bytesReceived);
-                }
-            }
+            totalSent += sent;
         }
     }
 
-    // データ送信
-    void SendData(unsigned char* buffer, int length)
+    // データ受信関数
+    bytes ReceiveData(int socket)
     {
-        // クライアントが接続されていたらデータを送信
-        if (clientSocket != -1)
+        // まずデータの長さを受信
+        int dataLength = 0;
+        int lengthReceived = recv(socket, reinterpret_cast<char*>(&dataLength), sizeof(dataLength), 0);
+        if (lengthReceived == -1)
         {
-            send(clientSocket, buffer, length, 0);
+            WHBLogPrintf("Failed to receive data length.");
+            return {};
         }
+
+        // 受信するデータを格納するためのバッファを準備
+        bytes data;
+        int totalReceived = 0;
+        while (totalReceived < dataLength)
+        {
+            int received = recv(socket, reinterpret_cast<char*>(data.data()) + totalReceived, min(4096, dataLength - totalReceived), 0);
+            if (received == -1)
+            {
+                WHBLogPrintf("Failed to receive data.");
+                return {};
+            }
+            totalReceived += received;
+        }
+
+        return data;
     }
 }

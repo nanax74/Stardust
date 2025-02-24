@@ -1,28 +1,31 @@
 #include "memory.hpp"
 
-unsigned char ReadUInt8(unsigned int address)
+namespace memory
 {
-    if(OSIsAddressValid(address))
+    unsigned char ReadUInt8(unsigned int address)
     {
-        return *(unsigned char*)address;
+        if(OSIsAddressValid(address))
+        {
+            return *(unsigned char*)address;
+        }
+        return 0;
     }
-    return 0;
-}
-
-unsigned short ReadUInt16(unsigned int address)
-{
-    if(OSIsAddressValid(address))
+    
+    unsigned short ReadUInt16(unsigned int address)
     {
-        return *(unsigned short*)address;
+        if(OSIsAddressValid(address))
+        {
+            return *(unsigned short*)address;
+        }
+        return 0;
     }
-    return 0;
-}
-
-unsigned int ReadUInt32(unsigned int address)
-{
-    if(OSIsAddressValid(address))
+    
+    unsigned int ReadUInt32(unsigned int address)
     {
-        return *(unsigned int*)address;
+        if(OSIsAddressValid(address))
+        {
+            return *(unsigned int*)address;
+        }
+        return 0;
     }
-    return 0;
 }
