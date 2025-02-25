@@ -109,7 +109,7 @@ namespace TCPServer
 
                 if(OSIsAddressValid(address))
                 {
-                    unsigned short value = ReadUInt32(address);
+                    unsigned int value = ReadUInt32(address);
                     bytes response;
                     response.push_back(RESPONSE_VALUE);
                     response.append(value);

@@ -57,6 +57,7 @@ namespace data
             }
             totalSent += sent;
         }
+        WHBLogPrintf("Sent:%dbytes", data.size());
     }
 
     // データ受信関数
@@ -84,7 +85,6 @@ namespace data
             totalLengthReceived += received;
         }
         dataLength = static_cast<intEx>(dataLength).reverse().get();    // カスタムクラス:intExを使ってエンディアン反転
-        WHBLogPrintf("dataLength:%X", dataLength);
     
         // データ本体を受信
         bytes data;
@@ -108,7 +108,7 @@ namespace data
             }
             totalReceived += received;
         }
-    
+        WHBLogPrintf("Received:%dbytes", data.size());
         return data;
     }
 
