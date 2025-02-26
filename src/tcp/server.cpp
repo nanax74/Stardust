@@ -136,7 +136,8 @@ namespace TCPServer
 
     void ReceiveFromClient()
     {
-        bytes data = ReceiveData(clientSocket);
-        ProcessCommand(clientSocket, data);
+        bytes data; // データを受け取るためのバッファ
+        ReceiveData(clientSocket, data); // データを受け取る
+        ProcessCommand(clientSocket, data); // コマンドを処理
     }
 }
