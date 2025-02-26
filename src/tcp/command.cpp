@@ -6,13 +6,8 @@ using namespace data;
 
 #define DATA_HEDDER 1   // ヘッダーの大きさ
 
-#define COMMAND_READ_8 0x00
-#define COMMAND_READ_16 0x01
-#define COMMAND_READ_32 0x02
-#define COMMAND_READ_ANY 0x03
-#define COMMAND_WRITE_8 0x04
-#define COMMAND_WRITE_16 0x05
-#define COMMAND_WRITE_32 0x06
+#define COMMAND_READ 0x00
+#define COMMAND_WRITE 0x01
 
 #define RESPONSE_SUCCESS 0x00
 #define RESPONSE_VALUE 0x01
@@ -20,13 +15,8 @@ using namespace data;
 
 map<unsigned char, string> commandMap =
 {
-    {COMMAND_READ_8, "Read8"},
-    {COMMAND_READ_16, "Read16"},
-    {COMMAND_READ_32, "Read32"},
-    {COMMAND_READ_ANY, "ReadAny"},
-    {COMMAND_WRITE_8, "Write8"},
-    {COMMAND_WRITE_16, "Write16"},
-    {COMMAND_WRITE_32, "Write32"}
+    {COMMAND_READ, "Read"},
+    {COMMAND_WRITE, "Write"}
 };
 
 string GetCommandTypeStr(unsigned char command)
@@ -68,92 +58,23 @@ namespace TCPServer
 
         switch (command)
         {
-            case COMMAND_READ_8:
+            case COMMAND_READ:
             {
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned char)) ResponseFailed(socket); // アドレスが足りない場合は無視
+                // 開始アドレス + 読み取る長さ (例:1234567800001234 -> 12345678から1234byte読み取られる)
+                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 2) ResponseFailed(socket); // バイト数が足りない場合は失敗応答を送信
 
-                unsigned int address = data.getUInt(DATA_HEDDER);  // バッファから読み取るアドレスを取得
-
-                if(OSIsAddressValid(address))
-                {
-                    unsigned char value = ReadUInt8(address);
-                    bytes response;
-                    response.push_back(RESPONSE_VALUE);
-                    response.append(value);
-                    SendData(socket, response);
-                }
-                else
-                {
-                    ResponseFailed(socket);
-                }
-
-                break;
-            }
-            case COMMAND_READ_16:
-            {
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned short)) ResponseFailed(socket); // アドレスが足りない場合は無視
-
-                unsigned int address = data.getUInt(DATA_HEDDER);  // バッファから読み取るアドレスを取得
-
-                if(OSIsAddressValid(address))
-                {
-                    unsigned short value = ReadUInt16(address);
-                    bytes response;
-                    response.push_back(RESPONSE_VALUE);
-                    response.append(value);
-                    SendData(socket, response);
-                }
-                else
-                {
-                    ResponseFailed(socket);
-                }
-
-                break;
-            }
-            case COMMAND_READ_32:
-            {
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int)) ResponseFailed(socket); // アドレスが足りない場合は無視
-
-                unsigned int address = data.getUInt(DATA_HEDDER);  // バッファから読み取るアドレスを取得
-
-                if(OSIsAddressValid(address))
-                {
-                    unsigned int value = ReadUInt32(address);
-                    bytes response;
-                    response.push_back(RESPONSE_VALUE);
-                    response.append(value);
-                    SendData(socket, response);
-                }
-                else
-                {
-                    ResponseFailed(socket);
-                }
-
-                break;
-            }
-            case COMMAND_READ_ANY:
-            {
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 2) ResponseFailed(socket); // アドレスが足りない場合は無視
-
-                unsigned int startAddress = data.getUInt(DATA_HEDDER);  // バッファから読み取るアドレスを取得
-                unsigned int endAddress = data.getUInt(DATA_HEDDER + (int)sizeof(unsigned int));  // バッファから読み取るアドレスを取得
-
-                if (startAddress >= endAddress)
-                {
-                    ResponseFailed(socket);
-                    break;
-                }
-
-                int readSize = endAddress - startAddress;
+                unsigned int startAddress = data.getUInt(DATA_HEDDER);  // 読み取るアドレスを取得
+                unsigned int readSize = data.getUInt(DATA_HEDDER + (int)sizeof(unsigned int));
 
                 bytes response;
                 response.push_back(RESPONSE_VALUE);
 
-                for(int i = 0; i < readSize; i++)
+                for(unsigned int i = 0; i < readSize; i++)
                 {
-                    if(OSIsAddressValid(startAddress + i))
+                    unsigned int address = startAddress + i;
+                    if(OSIsAddressValid(address))
                     {
-                        unsigned char value = ReadUInt8(startAddress + i);
+                        unsigned char value = ReadUInt8(address);
                         response.append(value);
                     }
                     else
@@ -165,67 +86,34 @@ namespace TCPServer
                 SendData(socket, response);
                 break;
             }
-            case COMMAND_WRITE_8:
+            case COMMAND_WRITE:
             {
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int) + (int)sizeof(unsigned char)) ResponseFailed(socket); // アドレスが足りない場合は無視
+                // 開始アドレス + 書き込む値 (例:123456780123456789ABCDEF -> 12345678に8byteの値0123456789ABCDEFが書き込まれる)
+                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int) + (int)sizeof(unsigned char)) ResponseFailed(socket); // バイト数が足りない場合は失敗応答を送信
 
-                unsigned int address = data.getUInt(DATA_HEDDER);  // バッファから読み取るアドレスを取得
-                unsigned char value = data.getUChar(DATA_HEDDER + (int)sizeof(unsigned int));
+                unsigned int startAddress = data.getUInt(DATA_HEDDER);  // 書き込むメモリアドレスを取得
+                bytes values;
+                values.assign(data.begin() + DATA_HEDDER + (int)sizeof(unsigned int), data.end());  // 書き込む値を取得
+                unsigned int writeSize = values.size();
 
-                if(OSIsAddressValid(address))
+                bytes response;
+                response.push_back(RESPONSE_VALUE);
+
+                for(unsigned int i = 0; i < writeSize; i++)
                 {
-                    WriteUInt8(address, value);
-                    bytes response;
-                    response.push_back(RESPONSE_SUCCESS);
-                    SendData(socket, response);
+                    unsigned int address = startAddress + i;
+                    if(OSIsAddressValid(address))
+                    {
+                        unsigned char value = values[i];
+                        WriteUInt8(address, value);
+                    }
+                    else
+                    {
+                        ResponseFailed(socket);
+                        break;
+                    }
                 }
-                else
-                {
-                    ResponseFailed(socket);
-                }
-
-                break;
-            }
-            case COMMAND_WRITE_16:
-            {
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int) + (int)sizeof(unsigned short)) ResponseFailed(socket); // アドレスが足りない場合は無視
-
-                unsigned int address = data.getUInt(DATA_HEDDER);  // バッファから読み取るアドレスを取得
-                unsigned short value = data.getUShort(DATA_HEDDER + (int)sizeof(unsigned int));
-
-                if(OSIsAddressValid(address))
-                {
-                    WriteUInt16(address, value);
-                    bytes response;
-                    response.push_back(RESPONSE_SUCCESS);
-                    SendData(socket, response);
-                }
-                else
-                {
-                    ResponseFailed(socket);
-                }
-
-                break;
-            }
-            case COMMAND_WRITE_32:
-            {
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int) + (int)sizeof(unsigned int)) ResponseFailed(socket); // アドレスが足りない場合は無視
-
-                unsigned int address = data.getUInt(DATA_HEDDER);  // バッファから読み取るアドレスを取得
-                unsigned int value = data.getUInt(DATA_HEDDER + (int)sizeof(unsigned int));
-
-                if(OSIsAddressValid(address))
-                {
-                    WriteUInt32(address, value);
-                    bytes response;
-                    response.push_back(RESPONSE_SUCCESS);
-                    SendData(socket, response);
-                }
-                else
-                {
-                    ResponseFailed(socket);
-                }
-
+                SendData(socket, response);
                 break;
             }
             default:
