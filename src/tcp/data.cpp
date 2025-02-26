@@ -87,6 +87,7 @@ namespace data
             }
             totalLengthReceived += received;
         }
+        dataLength = static_cast<intEx>(dataLength).reverse().get();    // カスタムクラス:intExを使ってエンディアン反転
     
         // データ本体を受信
         bytes data;

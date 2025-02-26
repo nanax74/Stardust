@@ -28,4 +28,27 @@ namespace memory
         }
         return 0;
     }
+
+    void WriteUInt8(unsigned int address, unsigned char value)
+    {
+        if(OSIsAddressValid(address))
+        {
+            *(unsigned char*)address = value;
+        }
+    }
+
+    void WriteUInt16(unsigned int address, unsigned short value)
+    {
+        if(OSIsAddressValid(address))
+        {
+            *(unsigned short*)address = value;
+        }
+    }
+    void WriteUInt32(unsigned int address, unsigned int value)
+    {
+        if(OSIsAddressValid(address))
+        {
+            *(unsigned int*)address = value;
+        }
+    }
 }
