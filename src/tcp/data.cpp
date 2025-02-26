@@ -10,7 +10,7 @@ namespace data
         // データが空の場合中止
         if (data.empty())
         {
-            WHBLogPrintf("No data to send.");
+            WHBLogPrintf("No data to send");
             return;
         }
     
@@ -83,11 +83,10 @@ namespace data
                 {
                     WHBLogPrintf("Failed to receive data length: %s", strerror(errno));
                 }
-                return {}; // エラー時は空のデータを返す
+                return bytes(); // エラー時は空のデータを返す
             }
             totalLengthReceived += received;
         }
-        dataLength = static_cast<intEx>(dataLength).reverse().get();    // カスタムクラス:intExを使ってエンディアン反転
     
         // データ本体を受信
         bytes data;
@@ -108,11 +107,10 @@ namespace data
                 {
                     WHBLogPrintf("Failed to receive data: %s", strerror(errno));
                 }
-                return {}; // エラー時は空のデータを返す
+                return bytes(); // エラー時は空のデータを返す
             }
             totalReceived += received;
         }
-        WHBLogPrintf("Received:%dbytes", data.size());
         return data;
     }
 

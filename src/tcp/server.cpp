@@ -32,7 +32,6 @@ namespace TCPServer
         while (!token.stop_requested())
         {
             Update();
-            this_thread::sleep_for(chrono::milliseconds(1000 / 60));
         }
     }
 
