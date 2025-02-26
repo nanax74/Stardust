@@ -30,5 +30,6 @@ namespace TCPServer
     void Update();
     void End();
     void AcceptClient();
+    void DisconnectClient();
     void ReceiveFromClient();
 }

@@ -126,6 +126,15 @@ namespace TCPServer
         }
     }
 
+    void DisconnectClient()
+    {
+        if (clientSocket != -1)
+        {
+            close(clientSocket);
+            clientSocket = -1; // クライアントソケットをリセット
+        }
+    }
+
     void ReceiveFromClient()
     {
         bytes data = ReceiveData(clientSocket);

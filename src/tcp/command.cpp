@@ -45,6 +45,8 @@ namespace TCPServer
     {
         int dataSize = data.size();
 
+        if(dataSize == 0) return;
+
         unsigned char command = data[0];  // コマンドの種類
 
         WHBLogPrintf("CommandType:%s", GetCommandTypeStr(command).c_str());  // コマンドの種類を出力

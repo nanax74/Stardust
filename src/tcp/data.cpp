@@ -25,7 +25,8 @@ namespace data
             {
                 if (sent == 0)
                 {
-                    WHBLogPrintf("Connection closed by peer.");
+                    WHBLogPrintf("Disconnected from client");
+                    TCPServer::DisconnectClient();
                 }
                 else
                 {
@@ -47,7 +48,8 @@ namespace data
             {
                 if (sent == 0)
                 {
-                    WHBLogPrintf("Connection closed by peer.");
+                    WHBLogPrintf("Disconnected from client");
+                    TCPServer::DisconnectClient();
                 }
                 else
                 {
@@ -74,7 +76,8 @@ namespace data
             {
                 if (received == 0)
                 {
-                    WHBLogPrintf("Connection closed by peer.");
+                    WHBLogPrintf("Disconnected from client");
+                    TCPServer::DisconnectClient();
                 }
                 else
                 {
@@ -98,7 +101,8 @@ namespace data
             {
                 if (received == 0)
                 {
-                    WHBLogPrintf("Connection closed by peer.");
+                    WHBLogPrintf("Disconnected from client");
+                    TCPServer::DisconnectClient();
                 }
                 else
                 {
