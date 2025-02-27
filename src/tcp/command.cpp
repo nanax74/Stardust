@@ -10,8 +10,8 @@ using namespace data;
 
 #define COMMAND_READ 0x00 // バイト数制限付き
 #define COMMAND_WRITE 0x01 // バイト数制限付き
-#define COMMAND_DUMP 0x03 // バイト数無制限、読み取ったデータは"fs:/vol/external01/wiiu/Stardust/Dump.bin"に保存
-#define COMMAND_SEARCH 0x02 // 結果が1MBを超えた場合、結果を送信せずにサイズだけ送信、結果はファイルに保存
+#define COMMAND_DUMP 0x02 // バイト数無制限、読み取ったデータは"fs:/vol/external01/wiiu/Stardust/Dump.bin"に保存
+#define COMMAND_SEARCH 0x03 // 結果が1MBを超えた場合、結果を送信せずにサイズだけ送信、結果はファイルに保存
 
 #define RESPONSE_SUCCESS 0x00 // 成功応答
 #define RESPONSE_VALUE 0x01 // 値応答
@@ -43,7 +43,7 @@ namespace TCPServer
     void ResponseFailed(int socket)
     {
         bytes response;
-        response.append((unsigned char)RESPONSE_FAILED);
+        response.push_back(RESPONSE_FAILED);
         SendData(socket, response);
     }
 
@@ -136,6 +136,7 @@ namespace TCPServer
                 }
 
                 bytes response; // 応答
+                response.push_back(RESPONSE_SUCCESS);
 
                 for(unsigned int i = 0; i < writeSize; i++) // すべてのデータを書き込むまでループ
                 {
@@ -153,36 +154,6 @@ namespace TCPServer
                     }
                 }
                 SendData(socket, response); // 結果を送信
-                break;
-            }
-            case COMMAND_SEARCH:
-            {
-                // 開始アドレス + サーチする長さ + サーチする値 (例:10000000 00001000 3F800000 -> 10000000から1000byteの範囲で値が3F800000のアドレスが検索される)
-                if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 3) break;
-
-                unsigned int startAddress = data.getUInt(DATA_HEDDER);  // 書き込むメモリアドレスを取得
-                unsigned int searchSize = data.getUInt(DATA_HEDDER + (int)sizeof(startAddress));
-                unsigned int searchValue = data.getUInt(DATA_HEDDER + (int)sizeof(startAddress) + (int)sizeof(searchSize));
-
-                bytes response;
-            
-                for(unsigned int i = 0; i < searchSize / sizeof(unsigned int); i++)
-                {
-                    unsigned int address = startAddress + i * sizeof(unsigned int);
-                    if(OSIsAddressValid(address))
-                    {
-                        unsigned int value = ReadUInt32(address);
-                        if(value == searchValue)
-                        {
-                            response.append(address);
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                SendData(socket, response);
                 break;
             }
             case COMMAND_DUMP:
@@ -231,6 +202,36 @@ namespace TCPServer
 
                 WHBLogPrintf("Processing complete: %lld ms", duration); // かかった時間を表示
 
+                break;
+            }
+            case COMMAND_SEARCH:
+            {
+                // 開始アドレス + サーチする長さ + サーチする値 (例:10000000 00001000 3F800000 -> 10000000から1000byteの範囲で値が3F800000のアドレスが検索される)
+                if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 3) break;
+
+                unsigned int startAddress = data.getUInt(DATA_HEDDER);  // 書き込むメモリアドレスを取得
+                unsigned int searchSize = data.getUInt(DATA_HEDDER + (int)sizeof(startAddress));
+                unsigned int searchValue = data.getUInt(DATA_HEDDER + (int)sizeof(startAddress) + (int)sizeof(searchSize));
+
+                bytes response;
+            
+                for(unsigned int i = 0; i < searchSize / sizeof(unsigned int); i++)
+                {
+                    unsigned int address = startAddress + i * sizeof(unsigned int);
+                    if(OSIsAddressValid(address))
+                    {
+                        unsigned int value = ReadUInt32(address);
+                        if(value == searchValue)
+                        {
+                            response.append(address);
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                SendData(socket, response);
                 break;
             }
             default:
