@@ -2,10 +2,14 @@
 #include "tcp/server.hpp"
 
 WUPS_PLUGIN_NAME("Stardust");
-WUPS_PLUGIN_DESCRIPTION("Stardust");
+WUPS_PLUGIN_DESCRIPTION("TCPServer");
 WUPS_PLUGIN_VERSION("v1.0");
 WUPS_PLUGIN_AUTHOR("Nanashi");
 WUPS_PLUGIN_LICENSE("GPLv3");
+
+WUPS_USE_WUT_DEVOPTAB(); // ファイルの読み書きに必須(無いとフリーズ)
+WUPS_USE_STORAGE("stardust"); // ストレージAPIの個別ID(なくても一応ファイルの読み書きはできるが念のため入れておく)
+
 
 INITIALIZE_PLUGIN()
 {

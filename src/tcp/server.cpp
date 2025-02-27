@@ -29,7 +29,7 @@ namespace TCPServer
     // スレッド
     void Thread(stop_token token)
     {
-        while (!token.stop_requested())
+        while(!token.stop_requested())
         {
             Update();
         }
@@ -52,7 +52,7 @@ namespace TCPServer
         InitSocketFunctionPointers();
 
         serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (serverSocket < 0)
+        if(serverSocket < 0)
         {
             WHBLogPrintf("Failed to create socket\n");
             return;
@@ -66,14 +66,14 @@ namespace TCPServer
         serverAddr.sin_port = htons(TCP_PORT);
         serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-        if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
+        if(bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
         {
             WHBLogPrintf("Failed to bind socket\n");
             return;
         }
         WHBLogPrintf("Socket bound");
 
-        if (listen(serverSocket, 1) < 0)
+        if(listen(serverSocket, 1) < 0)
         {
             WHBLogPrintf("Failed to listen on socket\n");
             return;
@@ -99,13 +99,13 @@ namespace TCPServer
 
         tcpServer.request_stop();
 
-        if (clientSocket != -1)
+        if(clientSocket != -1)
         {
             close(clientSocket);
             clientSocket = -1; // クライアントソケットをリセット
         }
 
-        if (serverSocket != -1)
+        if(serverSocket != -1)
         {
             close(serverSocket);
             serverSocket = -1;  // サーバーソケットをリセット
@@ -117,7 +117,7 @@ namespace TCPServer
     // クライアントの接続待機
     void AcceptClient()
     {
-        if (clientSocket == -1)
+        if(clientSocket == -1)
         {
             WHBLogPrintf("Waiting to accept client");
             clientSocket = accept(serverSocket, NULL, NULL);
@@ -127,7 +127,7 @@ namespace TCPServer
 
     void DisconnectClient()
     {
-        if (clientSocket != -1)
+        if(clientSocket != -1)
         {
             close(clientSocket);
             clientSocket = -1; // クライアントソケットをリセット
