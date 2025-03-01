@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../main.hpp"
+#include <vector>
 
 class bytes : public std::vector<unsigned char>
 {

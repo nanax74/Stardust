@@ -1,5 +1,17 @@
 #include "data.hpp"
 
+// std
+#include <algorithm>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+
+// wut
+#include "whb/log.h"
+
+// stardust
+#include "server.hpp"
+
 using namespace std;
 
 namespace data
@@ -151,46 +163,161 @@ namespace data
     }
 
     // ファイルにバイナリデータを書き込む関数
-    bool WriteFile(const string &filePath, const bytes &buffer)
+    bool WriteFile(const string& filePath, const bytes& buffer)
     {
-        FILE *file = fopen(filePath.c_str(), "ab");  // ファイルを開く(バイナリデータを追記)
-        if (!file) // ファイルが開けなかったら
+        FILE *file = fopen(filePath.c_str(), "ab");  // バイナリデータを追記
+        if(!file) // ファイルが開けなかったら
         {
             WHBLogPrintf("Failed to open file: %s, errno: %d", filePath.c_str(), errno);
             return false; // 書き込み失敗
         }
     
-        WHBLogPrintf("Writing to file: %s", filePath);
-        unsigned int written = fwrite(buffer.data(), 1, buffer.size(), file); // 書き込み
-        WHBLogPrintf("Wrote to file: %s", filePath);
+        unsigned int bytesWritten = fwrite(buffer.data(), 1, buffer.size(), file); // 書き込み
 
         fclose(file); // ファイルを閉じる
     
-        if (written != buffer.size()) // バッファのサイズ分書き込まれなかったら
+        if(bytesWritten != buffer.size()) // バッファのサイズ分書き込まれなかったら
         {
-            WHBLogPrintf("Failed to write all data. Expected: %zu, Written: %zu", buffer.size(), written);
+            WHBLogPrintf("Failed to write all data. Expected: %zu, Written: %zu", buffer.size(), bytesWritten);
             return false; // 書き込み失敗
         }
     
-        WHBLogPrintf("File written successfully: %s (%zu bytes)", filePath.c_str(), buffer.size());
+        WHBLogPrintf("File writing successfully: %s (%zu bytes)", filePath.c_str(), buffer.size());
         return true; // 書き込み成功
     }
 
-    bool ReadFile()
+    bool ReadFile(const string& filePath, bytes& buffer, unsigned int offset, unsigned int dataLength) 
     {
-        // TODO
-        return false;
-    }
+        FILE* file = fopen(filePath.c_str(), "rb");  // バイナリデータを読み取る
+        if(!file)
+        {
+            WHBLogPrintf("Failed to open file: %s, errno: %d", filePath.c_str(), errno);
+            return false;
+        }
+
+        unsigned int fileSize = 0;
+        GetFileSize(file, fileSize);
+    
+        // 読み取り範囲の調整
+        if(offset >= (unsigned int)fileSize) // オフセットがファイルサイズを超えていたら読み取り不能
+        {
+            WHBLogPrintf("Offset exceeds file size: %s", filePath.c_str());
+            fclose(file);
+            return false;
+        }
+    
+        if(offset + dataLength > (unsigned int)fileSize) // 終端を超える場合
+        {
+            dataLength = fileSize - offset; // 読み取れるサイズに調整
+        }
+    
+        // 読み取り開始位置に移動
+        if(fseek(file, offset, SEEK_SET) != 0)
+        {
+            WHBLogPrintf("Failed to seek to offset: %s", filePath.c_str());
+            fclose(file);
+            return false;
+        }
+    
+        // 読み取り
+        buffer.resize(dataLength);
+        unsigned int bytesRead = fread(buffer.data(), 1, dataLength, file);
+        fclose(file);
+    
+        if(bytesRead < dataLength)
+        {
+            WHBLogPrintf("Reached end of file. Expected: %u, Read: %u", dataLength, bytesRead);
+            buffer.resize(bytesRead); // 実際に読み取れたサイズにリサイズ
+        }
+    
+        WHBLogPrintf("File reading successfully: %s (%zu bytes)", filePath.c_str(), buffer.size());
+        return true;
+    }    
 
     // ファイルを削除
-    bool RemoveFile(const string &filePath)
+    bool RemoveFile(const string& filePath)
     {
         if(remove(filePath.c_str()) == 0)
         {
             WHBLogPrintf("%s is removed", filePath.c_str());
             return true;
         }
-        return false;
+        else
+        {
+            WHBLogPrintf("Failed removing %s", filePath.c_str());
+            return false;
+        }
+    }
+    
+    // ファイルの改名
+    bool RenameFile(const string& filePath, const string& newFilePath)
+    {
+        if(std::rename(filePath.c_str(), newFilePath.c_str()) == 0)
+        {
+            WHBLogPrintf("Renamed: %s -> %s", filePath.c_str(), newFilePath.c_str());
+            return true;
+        }
+        else
+        {
+            WHBLogPrintf("Failed to rename: %s -> %s, errno: %d", filePath.c_str(), newFilePath.c_str(), errno);
+            return false;
+        }
+    }
+
+    // ファイルの存在確認
+    bool FileExists(const std::string &filePath)
+    {
+        struct stat buffer;
+        return (stat(filePath.c_str(), &buffer) == 0);  // stat関数が成功すれば存在する
+    }
+
+    bool GetFileSize(const string& filePath, unsigned int& fileSize)
+    {
+        FILE *file = fopen(filePath.c_str(), "rb");  // ファイルを開く
+        if(!file)
+        {
+            WHBLogPrintf("Failed to open file: %s, errno: %d", filePath.c_str(), errno);
+            return false;
+        }
+    
+        // ファイルサイズを取得
+        if(fseek(file, 0, SEEK_END) != 0)
+        {
+            WHBLogPrintf("Failed to seek file: %s", filePath.c_str());
+            fclose(file);
+            return false;
+        }
+    
+        fileSize = ftell(file);
+        if(fileSize < 0)
+        {
+            WHBLogPrintf("Failed to get file size: %s", filePath.c_str());
+            fclose(file);
+            return false;
+        }
+        WHBLogPrintf("Size of %s is %d", filePath.c_str(), fileSize);
+        fclose(file);
+        return true;
+    }
+
+    bool GetFileSize(FILE* file, unsigned int& fileSize)
+    {
+        // ファイルサイズを取得
+        if(fseek(file, 0, SEEK_END) != 0)
+        {
+            WHBLogPrintf("Failed to seek file");
+            fclose(file);
+            return false;
+        }
+    
+        fileSize = ftell(file);
+        if(fileSize < 0)
+        {
+            WHBLogPrintf("Failed to get file size");
+            fclose(file);
+            return false;
+        }
+        return true;
     }
 
     int intEx::get()

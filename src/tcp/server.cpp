@@ -1,5 +1,20 @@
 #include "server.hpp"
 
+// std
+#include <algorithm>
+#include <cstring> // memset
+
+// wut
+#include <arpa/inet.h> // ネット関連の処理に必要
+#include <nn/ac.h> // IPアドレスの取得に必要
+#include <unistd.h> // close関数に必要
+#include <whb/log.h>
+
+// stardust
+#include "command.hpp"
+#include "data.hpp"
+#include "../utils/bytes.hpp"
+
 using namespace std;
 using namespace data;
 

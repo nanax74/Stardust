@@ -1,21 +1,21 @@
 #include "command.hpp"
 
+// std
+#include <map>
+#include <filesystem>
+
+// wut
+#include <coreinit/memorymap.h>
+#include <whb/log.h>
+
+// stardust
+#include "data.hpp"
+#include "../utils/math.hpp"
+#include "../utils/memory.hpp"
+
 using namespace std;
 using namespace memory;
 using namespace data;
-
-#define DATA_HEDDER 1   // ヘッダーの大きさ
-
-#define BUFFER_SIZE 0x100000 // バッファの大きさ
-
-#define COMMAND_READ 0x00 // バイト数制限付き
-#define COMMAND_WRITE 0x01 // バイト数制限付き
-#define COMMAND_DUMP 0x02 // バイト数無制限、読み取ったデータは"fs:/vol/external01/wiiu/Stardust/Dump.bin"に保存
-#define COMMAND_SEARCH 0x03 // 結果が1MBを超えた場合、結果を送信せずにサイズだけ送信、結果はファイルに保存
-
-#define RESPONSE_SUCCESS 0x00 // 成功応答
-#define RESPONSE_VALUE 0x01 // 値応答
-#define RESPONSE_FAILED 0xFF // 失敗応答
 
 // コマンドの種類
 map<unsigned char, string> commandMap =
@@ -23,7 +23,8 @@ map<unsigned char, string> commandMap =
     {COMMAND_READ, "Read"},
     {COMMAND_WRITE, "Write"},
     {COMMAND_DUMP, "Dump"},
-    {COMMAND_SEARCH, "Search"}
+    {COMMAND_SEARCH_SPEC, "Specific Search"},
+    {COMMAND_SEARCH_UNKN, "Unknown Search"}
 };
 
 // コマンドの種類を文字列で取得
@@ -71,11 +72,12 @@ namespace TCPServer
         {
             case COMMAND_READ: // データ読み取り
             {
-                // 開始アドレス + 読み取る長さ (例:1234567800001234 -> 12345678から1234byte読み取られる)
-                if (dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 2) // コマンドの長さが足りなければ中止
+                // 開始アドレス + 読み取る長さ (例:10000000 00001000 -> 0x10000000から0x1000byte読み取られる)
+                
+                if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 2) // コマンドの長さが足りなければ中止
                 {
-                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str()); // コマンドが短すぎます
-                    ResponseFailed(socket); // コマンドの長さが足りない場合は失敗応答を送信
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    ResponseFailed(socket);
                     break;
                 }
 
@@ -115,11 +117,12 @@ namespace TCPServer
             }
             case COMMAND_WRITE:
             {
-                // 開始アドレス + 書き込む値 (例:123456780123456789ABCDEF -> 12345678に8byteの値0123456789ABCDEFが書き込まれる)
+                // 開始アドレス + 書き込む値 (例:10000000 3F80000040000000 -> 0x10000000に8byteの値0x3F80000040000000が書き込まれる)
+
                 if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) + (int)sizeof(unsigned char)) // コマンドの長さが足りなければ中止
                 {
-                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str()); // コマンドが短すぎます
-                    ResponseFailed(socket); // コマンドの長さが足りない場合は失敗応答を送信
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    ResponseFailed(socket);
                     break;
                 }
 
@@ -158,53 +161,34 @@ namespace TCPServer
             }
             case COMMAND_DUMP:
             {
-                if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 2) break; // コマンドの長さが足りなければ中止
-            
-                auto startTime = std::chrono::high_resolution_clock::now(); // 計測開始
+                // 開始アドレス + ダンプする長さ (例:10000000 00001000 -> 0x10000000から0x1000byte読み取りダンプする)
 
-                string filePath = "fs:/vol/external01/wiiu/Stardust/Dump.bin"; // ダンプ結果を保存するファイル
-
-                RemoveFile(filePath); // ファイルがある場合は削除してから開始
+                if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 2) // コマンドの長さが足りなければ中止
+                {
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    ResponseFailed(socket);
+                    break;
+                }
+        
+                auto startTime = chrono::high_resolution_clock::now(); // 計測開始
 
                 unsigned int startAddress = data.getUInt(DATA_HEDDER);
                 unsigned int readSize = data.getUInt(DATA_HEDDER + (int)sizeof(unsigned int));
-            
-                unsigned int totalSent = 0;
-                bytes buffer;
-                buffer.resize(BUFFER_SIZE); // バッファを事前確保
-            
-                while(totalSent < readSize)
-                {
-                    unsigned int currentStartAddress = startAddress + totalSent;
-                    unsigned int remainingSize = readSize - totalSent;
-                    unsigned int readChunkSize = min(BUFFER_SIZE, (int)remainingSize);
-            
-                    if(OSIsAddressValid(currentStartAddress) && OSIsAddressValid(currentStartAddress + readChunkSize - 1))
-                    {
-                        WHBLogPrintf("Copying Data:%X~%X", currentStartAddress, currentStartAddress + readChunkSize - 1);
-                        memcpy(buffer.data(), (void*)currentStartAddress, readChunkSize);
-                        WHBLogPrintf("Copied Data:%X~%X", currentStartAddress, currentStartAddress + readChunkSize - 1);
-                        WriteFile(filePath, buffer);
-                        totalSent += readChunkSize;
-                    }
-                    else
-                    {
-                        break; // 不正アドレスがあれば終了
-                    }
-                }
 
-                auto endTime = std::chrono::high_resolution_clock::now(); // 計測終了
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(); // 経過時間を算出
+                MemoryDump("fs:/vol/external01/wiiu/Stardust/Dump.bin", startAddress, readSize); // メモリをダンプしファイルに保存
+
+                auto endTime = chrono::high_resolution_clock::now(); // 計測終了
+                auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count(); // 経過時間を算出
                 
                 bytes response;
                 response.append(readSize);
                 SendData(socket, response); // 応答
-
-                WHBLogPrintf("Processing complete: %lld ms", duration); // かかった時間を表示
+            
+                WHBLogPrintf("%s complete: %lld ms", commandStr.c_str(), duration); // かかった時間を表示
 
                 break;
             }
-            case COMMAND_SEARCH:
+            case COMMAND_SEARCH_SPEC:
             {
                 // 開始アドレス + サーチする長さ + サーチする値 (例:10000000 00001000 3F800000 -> 10000000から1000byteの範囲で値が3F800000のアドレスが検索される)
                 if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 3) break;
@@ -232,6 +216,48 @@ namespace TCPServer
                     }
                 }
                 SendData(socket, response);
+                break;
+            }
+            case COMMAND_SEARCH_UNKN:
+            {
+                // サーチの種類 + 値あたりの間隔 + 開始アドレス(例:00 04 10000000 3F800000 -> 0x10000000を基準にダンプファイルのサイズ分0x3F800000と同じ値のメモリアドレスを検索)
+
+                if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 2) // コマンドの長さが足りなければ中止
+                {
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    ResponseFailed(socket);
+                    break;
+                }
+
+                auto startTime = chrono::high_resolution_clock::now(); // 計測開始
+
+                unsigned char compareType = data.getUChar(DATA_HEDDER); // サーチの種類
+                unsigned char valueInterval = data.getUChar(DATA_HEDDER + sizeof(unsigned char)); // 値あたりの間隔
+            
+                unsigned int startAddress = data.getUInt(DATA_HEDDER + sizeof(unsigned char) * 2);
+                
+                int readSize = 0;
+                if(FileExists("fs:/vol/external01/wiiu/Stardust/Dump.bin"))
+                {
+                    readSize = SearchFromDump("fs:/vol/external01/wiiu/Stardust", startAddress, compareType);
+                }
+                else
+                {
+                    readSize = SearchFromSearch("fs:/vol/external01/wiiu/Stardust", startAddress, compareType);
+                }
+                
+                if(readSize == -1)
+                {
+                    break;
+                }
+
+                bytes response;
+                response.append(static_cast<unsigned int>(readSize));
+                SendData(socket, response); // 応答
+
+                auto endTime = chrono::high_resolution_clock::now(); // 計測終了
+                auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count(); // 経過時間を算出
+                WHBLogPrintf("Processing complete: %lld ms", duration); // かかった時間を表示
                 break;
             }
             default:

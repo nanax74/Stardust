@@ -1,7 +1,8 @@
 #pragma once
 
-#include <coreinit/memorymap.h>
-#include "../main.hpp"
+#include <string>
+
+#define BUFFER_SIZE 0x100000 // バッファの大きさ
 
 namespace memory
 {
@@ -11,4 +12,8 @@ namespace memory
     void WriteUInt8(unsigned int address, unsigned char value);
     void WriteUInt16(unsigned int address, unsigned short value);
     void WriteUInt32(unsigned int address, unsigned int value);
+
+    bool MemoryDump(std::string dirPath, unsigned int startAddress, unsigned int size);
+    int SearchFromDump(std::string dirPath, unsigned int startAddress, unsigned int compareType);
+    int SearchFromSearch(std::string dirPath, unsigned int startAddress, unsigned int compareType);
 }

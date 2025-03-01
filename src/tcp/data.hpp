@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../main.hpp"
-#include "server.hpp"
+// std
+#include <string>
+
+// stardust
 #include "../utils/bytes.hpp"
 
 namespace data
@@ -15,8 +17,12 @@ namespace data
     bool ReceiveDataContent(int socket, bytes& data, unsigned int dataLength); // データの本体を受信する関数
 
     bool WriteFile(const std::string &filePath, const bytes &buffer); // ファイルにバイナリデータを書き込む関数
-    bool ReadFile();
-    bool RemoveFile(const std::string &filePath);
+    bool ReadFile(const std::string &filePath, bytes &buffer, unsigned int offset, unsigned int dataLength); // ファイルからバイナリデータを読み取る関数
+    bool RemoveFile(const std::string &filePath); // ファイルを削除する関数
+    bool RenameFile(const std::string& filePath, const std::string& newFilePath); // ファイル名を変更する関数
+    bool FileExists(const std::string &filePath);
+    bool GetFileSize(const std::string& filePath, unsigned int& fileSize); // ファイルサイズを取得する関数
+    bool GetFileSize(FILE* file, unsigned int& fileSize); // ファイルサイズを取得する関数
 
     class intEx // バイトオーダー変換ができる拡張クラス
     {

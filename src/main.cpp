@@ -1,4 +1,16 @@
 #include "main.hpp"
+
+// wums
+#include <notifications/notifications.h>
+
+// wups
+#include <wups.h>
+
+// wut
+#include <whb/log.h>
+#include <whb/log_udp.h>
+
+// stardust
 #include "tcp/server.hpp"
 
 WUPS_PLUGIN_NAME("Stardust");

@@ -33,7 +33,6 @@ LIB_INC := $(PORTLIBS)/include
 TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
-				src/patcher \
 				src/tcp \
 				src/utils
 DATA		:=	data
