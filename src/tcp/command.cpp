@@ -266,6 +266,11 @@ namespace TCPServer
                         advanced::DumpMemory<unsigned long>(socket, dirPath, "Search", address, size);
                         break;
                     }
+                    default:
+                    {
+                        RepsonseFailed(socket);
+                        break;
+                    }
                 }
                 break;
             }
@@ -283,49 +288,65 @@ namespace TCPServer
                     case VALUE_CHAR:
                     {
                         MemoryList<char> src;
-                        advanced::SearchMemory<char>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<char>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                     case VALUE_UCHAR:
                     {
                         MemoryList<unsigned char> src;
-                        advanced::SearchMemory<unsigned char>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<unsigned char>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                     case VALUE_SHORT:
                     {
                         MemoryList<short> src;
-                        advanced::SearchMemory<short>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<short>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                     case VALUE_USHORT:
                     {
                         MemoryList<unsigned short> src;
-                        advanced::SearchMemory<unsigned short>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<unsigned short>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                     case VALUE_INT:
                     {
                         MemoryList<int> src;
-                        advanced::SearchMemory<int>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<int>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                     case VALUE_UINT:
                     {
                         MemoryList<unsigned int> src;
-                        advanced::SearchMemory<unsigned int>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<unsigned int>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                     case VALUE_LONG:
                     {
                         MemoryList<long> src;
-                        advanced::SearchMemory<long>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<long>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                     case VALUE_ULONG:
                     {
                         MemoryList<unsigned long> src;
-                        advanced::SearchMemory<unsigned long>(socket, dirPath, "Search");
+                        int results;
+                        results = advanced::SearchMemory<unsigned long>(socket, dirPath, "Search");
+                        response.append(results);
                         break;
                     }
                 }

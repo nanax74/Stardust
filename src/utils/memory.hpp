@@ -12,7 +12,10 @@
 #include <whb/log.h>
 
 // stardust
+#include "../tcp/data.hpp"
 #include "compare.hpp"
+
+using namespace data;
 
 namespace memory
 {
@@ -155,6 +158,10 @@ namespace memory
 
             while (remaining > 0)
             {
+                bytes progress;
+                progress.append(part);
+                SendPacket(socket, progress, DATA_TYPE_PROGRESS);
+
                 unsigned int chunkSize = std::min(freeMemorySize, remaining);
 
                 unsigned int endAddress = currentAddress + chunkSize;
@@ -173,22 +180,29 @@ namespace memory
         }
 
         template <typename T>
-        void SearchMemory(int socket, std::string& dirPath, std::string fileName)
+        int SearchMemory(int socket, std::string& dirPath, std::string fileName)
         {
+            int results = 0;
+
             unsigned int part = 0;
             while (true)
             {
+                bytes progress;
+                progress.append(part);
+                SendPacket(socket, progress, DATA_TYPE_PROGRESS);
+
                 std::string filePath = std::format("{}/{}_{}.bin", dirPath, fileName, part);
                 WHBLogPrintf("Searching:%s", filePath.c_str());
 
                 MemoryList<T> src;
                 if(!base::LoadMemoryList<T>(filePath, src)) break;
                 MemoryList<T> dist;
-                base::SearchMemoryList<T>(src, dist, CompareFlags::EQ);
+                results += base::SearchMemoryList<T>(src, dist, CompareFlags::EQ);
                 base::SaveMemoryList<T>(filePath, dist);
 
                 part++;
             }
+            return results;
         }
     }
 }
