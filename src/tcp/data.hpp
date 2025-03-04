@@ -6,23 +6,19 @@
 // stardust
 #include "../utils/bytes.hpp"
 
+#define MAX_DATA_SIZE 0x10000 // データ本体の最大サイズ
+
+#define DATA_TYPE_COMMAND 0x01
+#define DATA_TYPE_RESPONSE 0x02
+#define DATA_TYPE_PROGRESS 0x03
+
 namespace data
 {
-    bool SendData(int socket, bytes& data);   // データ送信関数
-    bool ReceiveData(int socket, bytes& data);  // データ受信関数
+    int SendAll(int socket, bytes& buffer);
+    int ReceiveAll(int socket, bytes& buffer);
 
-    bool SendDataLength(int socket, unsigned int dataLength); // データの長さを送信する関数
-    bool SendDataContent(int socket, bytes& data, unsigned int dataLength); // データの本体を送信する関数
-    bool ReceiveDataLength(int socket, unsigned int& dataLength); // データの長さを受信する関数
-    bool ReceiveDataContent(int socket, bytes& data, unsigned int dataLength); // データの本体を受信する関数
-
-    bool WriteFile(const std::string &filePath, const bytes &buffer); // ファイルにバイナリデータを書き込む関数
-    bool ReadFile(const std::string &filePath, bytes &buffer, unsigned int offset, unsigned int dataLength); // ファイルからバイナリデータを読み取る関数
-    bool RemoveFile(const std::string &filePath); // ファイルを削除する関数
-    bool RenameFile(const std::string& filePath, const std::string& newFilePath); // ファイル名を変更する関数
-    bool FileExists(const std::string &filePath);
-    bool GetFileSize(const std::string& filePath, unsigned int& fileSize); // ファイルサイズを取得する関数
-    bool GetFileSize(FILE* file, unsigned int& fileSize); // ファイルサイズを取得する関数
+    int SendPacket(int socket, bytes& data, unsigned int type);
+    int ReceivePacket(int socket, bytes& data, unsigned int& type);
 
     class intEx // バイトオーダー変換ができる拡張クラス
     {

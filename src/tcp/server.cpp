@@ -151,8 +151,21 @@ namespace TCPServer
 
     void ReceiveFromClient()
     {
-        bytes data; // データを受け取るためのバッファ
-        ReceiveData(clientSocket, data); // データを受け取る
-        ProcessCommand(clientSocket, data); // コマンドを処理
+        int result; // 関数の返り値を格納する変数
+
+        // データを受け取るためのバッファ
+        bytes data;
+        unsigned int type;
+
+        result = ReceivePacket(clientSocket, data, type); // データを受け取る
+        if(result == 0)
+        {
+            DisconnectClient();
+        }
+
+        if(type == DATA_TYPE_COMMAND)
+        {
+            ProcessCommand(clientSocket, data); // コマンドを処理
+        }
     }
 }
