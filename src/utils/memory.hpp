@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+// wums
+#include <notifications/notifications.h>
+
 // wut
 #include <coreinit/memorymap.h>
 #include <whb/log.h>
@@ -14,8 +17,6 @@
 // stardust
 #include "../tcp/data.hpp"
 #include "compare.hpp"
-
-using namespace data;
 
 namespace memory
 {
@@ -83,7 +84,10 @@ namespace memory
             file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
             // メモリリストのデータを書き込む
-            file.write(reinterpret_cast<const char*>(dist.data()), size * sizeof(MemoryEntry<T>));
+            if(size > 0)
+            {
+                file.write(reinterpret_cast<const char*>(dist.data()), size * sizeof(MemoryEntry<T>));
+            }
 
             file.close();
             return true;
@@ -106,7 +110,10 @@ namespace memory
 
             // メモリリストのデータを読み込む
             src.resize(size);
-            file.read(reinterpret_cast<char*>(src.data()), size * sizeof(MemoryEntry<T>));
+            if(size > 0)
+            {
+                file.read(reinterpret_cast<char*>(src.data()), size * sizeof(MemoryEntry<T>));
+            }
 
             file.close();
             return true;
@@ -115,18 +122,23 @@ namespace memory
         // 連番ファイルを削除
         void RemoveFileInOrder(std::string& dirPath, std::string fileName, std::string extension);
 
+        bool FileExists(const std::string& filePath);
+
         // srcと現在のメモリをopで比較し、結果をdistに追加
         template <typename T>
         int SearchMemoryList(MemoryList<T>& src, MemoryList<T>& dist, CompareFlags op)
         {
             int count = 0;
-            for(MemoryEntry<T> item : src)
+            if(src.size() > 0)
             {
-                CompareFlags cmp = Compare<T>(item.value, ReadMemory<T>(item.address));
-                if((cmp & op) == op)
+                for(MemoryEntry<T> item : src)
                 {
-                    dist.push_back(item);
-                    ++count;
+                    CompareFlags cmp = Compare<T>(item.value, ReadMemory<T>(item.address));
+                    if((cmp & op) == op)
+                    {
+                        dist.push_back(item);
+                        ++count;
+                    }
                 }
             }
             return count;
@@ -149,7 +161,12 @@ namespace memory
         template <typename T>
         void DumpMemory(int socket, std::string& dirPath, std::string fileName, unsigned int address, unsigned int size)
         {
+            NotificationModuleHandle handleSub;
+            NotificationModule_AddDynamicNotification("Cleaning Files...", &handleSub);
             base::RemoveFileInOrder(dirPath, fileName, "bin"); // ファイルをクリーンアップ
+            
+            NotificationModuleHandle handleMain;
+            NotificationModule_AddDynamicNotification("Dumping...", &handleMain);
 
             unsigned int totalSize = size;
             unsigned int remaining = totalSize;
@@ -158,50 +175,82 @@ namespace memory
 
             while (remaining > 0)
             {
+                NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
                 bytes progress;
                 progress.append(part);
-                SendPacket(socket, progress, DATA_TYPE_PROGRESS);
+                data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
 
                 unsigned int chunkSize = std::min(freeMemorySize, remaining);
 
                 unsigned int endAddress = currentAddress + chunkSize;
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Reading:{:X}~{:X}", currentAddress, endAddress).c_str());
                 WHBLogPrintf("Dumping:%X~%X", currentAddress, endAddress);
         
                 MemoryList<T> list;
                 base::GetMemoryList<T>(currentAddress, chunkSize, list);
                 
                 std::string distPath = std::format("{}/{}_{}.bin", dirPath, fileName, part);
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Saving:{}", distPath).c_str());
                 base::SaveMemoryList<T>(distPath, list);
         
                 remaining -= chunkSize;
                 currentAddress += chunkSize;
                 part++;
             }
+            NotificationModule_FinishDynamicNotification(handleSub, 0.1f);
+            NotificationModule_FinishDynamicNotification(handleMain, 0.1f);
         }
 
         template <typename T>
-        int SearchMemory(int socket, std::string& dirPath, std::string fileName)
+        int SearchMemory(int socket, std::string& dirPath, std::string fileName, CompareFlags cmp)
         {
-            int results = 0;
+            NotificationModuleHandle handleSub;
+            NotificationModule_AddDynamicNotification("Starting Search...", &handleSub);
 
+            NotificationModuleHandle handleMain;
+            NotificationModule_AddDynamicNotification("Searching...", &handleMain);
+
+            int results = 0;
+        
             unsigned int part = 0;
             while (true)
             {
+                NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
                 bytes progress;
                 progress.append(part);
-                SendPacket(socket, progress, DATA_TYPE_PROGRESS);
-
+                data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
+        
                 std::string filePath = std::format("{}/{}_{}.bin", dirPath, fileName, part);
-                WHBLogPrintf("Searching:%s", filePath.c_str());
 
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Checking file exists:{}", filePath).c_str());
+                if(part > 0 && !base::FileExists(filePath))
+                {
+                    NotificationModule_AddInfoNotification("Dump complete!");
+                    break;
+                }
+        
                 MemoryList<T> src;
-                if(!base::LoadMemoryList<T>(filePath, src)) break;
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Loading:{}", filePath).c_str());
+                if(!base::LoadMemoryList<T>(filePath, src))
+                {
+                    NotificationModule_AddErrorNotification(std::format("Failed to load memory list from file:{}", filePath).c_str());
+                    break;
+                }
+        
                 MemoryList<T> dist;
-                results += base::SearchMemoryList<T>(src, dist, CompareFlags::EQ);
-                base::SaveMemoryList<T>(filePath, dist);
-
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Searching:{}", filePath).c_str());
+                results += base::SearchMemoryList<T>(src, dist, cmp);
+        
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Saving:{}", filePath).c_str());
+                if(!base::SaveMemoryList<T>(filePath, dist))
+                {
+                    NotificationModule_AddErrorNotification(std::format("Failed to save memory list to file:{}", filePath).c_str());
+                    break;
+                }
                 part++;
             }
+            NotificationModule_FinishDynamicNotification(handleSub, 0.1f);
+            NotificationModule_FinishDynamicNotification(handleMain, 0.1f);
             return results;
         }
     }

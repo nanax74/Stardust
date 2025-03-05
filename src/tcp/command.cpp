@@ -16,7 +16,7 @@
 
 #define COMMAND_READ 0x00 // バイト数制限付き
 #define COMMAND_WRITE 0x01 // バイト数制限付き
-#define COMMAND_SEARCH_SPEC 0x02 // 結果が1MBを超えた場合、結果を送信せずにサイズだけ送信、結果はファイルに保存
+#define COMMAND_SEARCH_SPEC 0x02 // Todo
 #define COMMAND_SEARCH_DUMP 0x03 // サーチ用のダンプ
 #define COMMAND_SEARCH_UNKN 0x04 // ダンプからサーチ
 
@@ -26,8 +26,8 @@
 #define VALUE_USHORT 0x03
 #define VALUE_INT 0x04
 #define VALUE_UINT 0x05
-#define VALUE_LONG 0x06
-#define VALUE_ULONG 0x07
+#define VALUE_FLOAT 0x06
+#define VALUE_DOUBLE 0x07
 
 using namespace std;
 using namespace memory;
@@ -224,6 +224,8 @@ namespace TCPServer
 
                 std::string dirPath = "fs:/vol/external01/wiiu/Stardust";
 
+                response.append(size);
+
                 switch (valueType)
                 {
                     case VALUE_CHAR:
@@ -256,14 +258,14 @@ namespace TCPServer
                         advanced::DumpMemory<unsigned int>(socket, dirPath, "Search", address, size);
                         break;
                     }
-                    case VALUE_LONG:
+                    case VALUE_FLOAT:
                     {
-                        advanced::DumpMemory<long>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<float>(socket, dirPath, "Search", address, size);
                         break;
                     }
-                    case VALUE_ULONG:
+                    case VALUE_DOUBLE:
                     {
-                        advanced::DumpMemory<unsigned long>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<double>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     default:
@@ -276,10 +278,12 @@ namespace TCPServer
             }
             case COMMAND_SEARCH_UNKN:
             {
-                // 開始アドレス(例:05 -> 前回のサーチ結果のサイズ分のメモリアドレスをunsigned intでサーチ)
+                // 開始アドレス(例:05 04 -> 前回のサーチ結果のサイズ分のメモリアドレスをunsigned intでサーチ)
 
                 // コマンドから情報を取得
                 unsigned char valueType = data.get<unsigned char>(dataIndex);
+                dataIndex += sizeof(valueType);
+                CompareFlags cmp = static_cast<CompareFlags>(data.get<unsigned char>(dataIndex));
             
                 std::string dirPath = "fs:/vol/external01/wiiu/Stardust";
             
@@ -289,7 +293,7 @@ namespace TCPServer
                     {
                         MemoryList<char> src;
                         int results;
-                        results = advanced::SearchMemory<char>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<char>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
@@ -297,7 +301,7 @@ namespace TCPServer
                     {
                         MemoryList<unsigned char> src;
                         int results;
-                        results = advanced::SearchMemory<unsigned char>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<unsigned char>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
@@ -305,7 +309,7 @@ namespace TCPServer
                     {
                         MemoryList<short> src;
                         int results;
-                        results = advanced::SearchMemory<short>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<short>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
@@ -313,7 +317,7 @@ namespace TCPServer
                     {
                         MemoryList<unsigned short> src;
                         int results;
-                        results = advanced::SearchMemory<unsigned short>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<unsigned short>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
@@ -321,7 +325,7 @@ namespace TCPServer
                     {
                         MemoryList<int> src;
                         int results;
-                        results = advanced::SearchMemory<int>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<int>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
@@ -329,23 +333,23 @@ namespace TCPServer
                     {
                         MemoryList<unsigned int> src;
                         int results;
-                        results = advanced::SearchMemory<unsigned int>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<unsigned int>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
-                    case VALUE_LONG:
+                    case VALUE_FLOAT:
                     {
-                        MemoryList<long> src;
+                        MemoryList<float> src;
                         int results;
-                        results = advanced::SearchMemory<long>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<float>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
-                    case VALUE_ULONG:
+                    case VALUE_DOUBLE:
                     {
-                        MemoryList<unsigned long> src;
+                        MemoryList<double> src;
                         int results;
-                        results = advanced::SearchMemory<unsigned long>(socket, dirPath, "Search");
+                        results = advanced::SearchMemory<double>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }

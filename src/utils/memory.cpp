@@ -22,5 +22,11 @@ namespace memory
             }
             WHBLogPrintf("No more files to delete:%s", fileName.c_str());
         }
+
+        bool FileExists(const std::string& filePath)
+        {
+            std::ifstream file(filePath);
+            return !file.fail();
+        }
     }
 }
