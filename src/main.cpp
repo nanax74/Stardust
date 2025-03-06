@@ -22,17 +22,20 @@ WUPS_PLUGIN_LICENSE("GPLv3");
 WUPS_USE_WUT_DEVOPTAB(); // ファイルの読み書きに必須(無いとフリーズ)
 WUPS_USE_STORAGE("stardust"); // ストレージAPIの個別ID(なくても一応ファイルの読み書きはできるが念のため入れておく)
 
-
 INITIALIZE_PLUGIN()
 {
-    WHBLogUdpInit();
     NotificationModule_InitLibrary();
     NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 5.0f);
+}
+
+ON_APPLICATION_START()
+{
+    WHBLogUdpInit();
     TCPServer::Init();
 }
 
-DEINITIALIZE_PLUGIN()
+ON_APPLICATION_REQUESTS_EXIT()
 {
-    WHBLogPrintf("Deinit");
     TCPServer::Deinit();
+    WHBLogUdpDeinit();
 }

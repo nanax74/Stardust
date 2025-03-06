@@ -37,6 +37,18 @@ namespace memory
 
     namespace base
     {
+        // ファイルを削除
+        bool RemoveFile(std::string& filePath);
+
+        // ファイルの存在確認
+        bool FileExists(const std::string& filePath);
+        
+        // ファイルの改名
+        bool RenameFile(const std::string& oldPath, const std::string& newPath);
+        
+        // ファイルサイズを取得
+        unsigned int GetFileSize(const std::string& filePath);
+
         template <typename T>
         T ReadMemory(unsigned int address)
         {
@@ -50,6 +62,7 @@ namespace memory
             {
                 return *reinterpret_cast<T*>(address);
             }
+            WHBLogPrintf("Address:%X is invalid", address);
             return 0;
         }
 
@@ -70,59 +83,53 @@ namespace memory
 
         // バイナリ形式でファイルに保存する関数
         template <typename T>
-        bool SaveMemoryList(const std::string& filePath, const MemoryList<T>& dist)
+        bool SaveMemoryList(const std::string& distPath, const MemoryList<T>& src)
         {
-            std::ofstream file(filePath, std::ios::binary);
-            if (!file)
-            {
-                WHBLogPrintf("Failed to open file:%s", filePath.c_str());
-                return false;
-            }
-
-            // 要素数を書き込む
-            size_t size = dist.size();
-            file.write(reinterpret_cast<const char*>(&size), sizeof(size));
-
-            // メモリリストのデータを書き込む
-            if(size > 0)
-            {
-                file.write(reinterpret_cast<const char*>(dist.data()), size * sizeof(MemoryEntry<T>));
-            }
-
+            std::ofstream file(distPath, std::ios::app | std::ios::binary);
+        
+            file.write(reinterpret_cast<const char*>(src.data()), src.size() * sizeof(MemoryEntry<T>));
+        
             file.close();
             return true;
-        }
+        }        
 
         // バイナリ形式でファイルから読み込む関数
         template <typename T>
-        bool LoadMemoryList(const std::string& filePath, MemoryList<T>& src)
+        size_t LoadMemoryList(const std::string& srcPath, MemoryList<T>& dist, unsigned int offset)
         {
-            std::ifstream file(filePath, std::ios::binary);
+            std::ifstream file(srcPath, std::ios::binary);
             if (!file)
             {
-                WHBLogPrintf("Failed to open file:%s", filePath.c_str());
-                return false;
+                WHBLogPrintf("Failed to open file:%s", srcPath.c_str());
+                return 0;
+            }
+            
+            size_t entrySize = sizeof(MemoryEntry<T>);
+            
+            unsigned int offsetSize = offset * entrySize;
+            unsigned int readSize = GetFileSize(srcPath);
+
+            if(readSize <= offsetSize)
+            {
+                WHBLogPrintf("Offset is out of range:%X", offset);
+                return 0;
             }
 
-            // 要素数を読み込む
-            size_t size;
-            file.read(reinterpret_cast<char*>(&size), sizeof(size));
+            readSize = readSize - offsetSize;
+            readSize = std::min(readSize, freeMemorySize);  // 必要に応じて読み込むサイズを制限
+            unsigned int readElements = readSize / entrySize;
 
             // メモリリストのデータを読み込む
-            src.resize(size);
-            if(size > 0)
+            dist.resize(readElements);
+            if (readSize > 0)
             {
-                file.read(reinterpret_cast<char*>(src.data()), size * sizeof(MemoryEntry<T>));
+                file.seekg(offsetSize, std::ios::beg); // ファイルの先頭からオフセット位置にシーク
+                file.read(reinterpret_cast<char*>(dist.data()), readSize);
             }
-
+            
             file.close();
-            return true;
+            return readElements;
         }
-
-        // 連番ファイルを削除
-        void RemoveFileInOrder(std::string& dirPath, std::string fileName, std::string extension);
-
-        bool FileExists(const std::string& filePath);
 
         // srcと現在のメモリをopで比較し、結果をdistに追加
         template <typename T>
@@ -133,10 +140,11 @@ namespace memory
             {
                 for(MemoryEntry<T> item : src)
                 {
-                    CompareFlags cmp = Compare<T>(item.value, ReadMemory<T>(item.address));
+                    T newValue = ReadMemory<T>(item.address);
+                    CompareFlags cmp = Compare<T>(newValue, item.value);
                     if((cmp & op) == op)
                     {
-                        dist.push_back(item);
+                        dist.push_back({item.address, newValue});
                         ++count;
                     }
                 }
@@ -161,23 +169,24 @@ namespace memory
         template <typename T>
         void DumpMemory(int socket, std::string& dirPath, std::string fileName, unsigned int address, unsigned int size)
         {
+            std::string distPath = std::format("{}/{}.bin", dirPath, fileName);
+
             NotificationModuleHandle handleSub;
             NotificationModule_AddDynamicNotification("Cleaning Files...", &handleSub);
-            base::RemoveFileInOrder(dirPath, fileName, "bin"); // ファイルをクリーンアップ
+            base::RemoveFile(distPath); // ファイルをクリーンアップ
             
             NotificationModuleHandle handleMain;
             NotificationModule_AddDynamicNotification("Dumping...", &handleMain);
-
-            unsigned int totalSize = size;
-            unsigned int remaining = totalSize;
+            
+            unsigned int totalDump = 0;
+            unsigned int remaining = size;
             unsigned int currentAddress = address;
-            unsigned int part = 0;
 
             while (remaining > 0)
             {
                 NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
                 bytes progress;
-                progress.append(part);
+                progress.append(totalDump);
                 data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
 
                 unsigned int chunkSize = std::min(freeMemorySize, remaining);
@@ -189,13 +198,12 @@ namespace memory
                 MemoryList<T> list;
                 base::GetMemoryList<T>(currentAddress, chunkSize, list);
                 
-                std::string distPath = std::format("{}/{}_{}.bin", dirPath, fileName, part);
                 NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Saving:{}", distPath).c_str());
                 base::SaveMemoryList<T>(distPath, list);
         
                 remaining -= chunkSize;
+                totalDump += chunkSize;
                 currentAddress += chunkSize;
-                part++;
             }
             NotificationModule_FinishDynamicNotification(handleSub, 0.1f);
             NotificationModule_FinishDynamicNotification(handleMain, 0.1f);
@@ -206,49 +214,54 @@ namespace memory
         {
             NotificationModuleHandle handleSub;
             NotificationModule_AddDynamicNotification("Starting Search...", &handleSub);
-
+        
             NotificationModuleHandle handleMain;
             NotificationModule_AddDynamicNotification("Searching...", &handleMain);
-
+        
+            std::string filePath = std::format("{}/{}.bin", dirPath, fileName);
+            std::string tempPath = std::format("{}/temp.bin", dirPath);
+        
             int results = 0;
         
-            unsigned int part = 0;
+            unsigned int totalSearch = 0;
             while (true)
             {
                 NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
                 bytes progress;
-                progress.append(part);
+                progress.append(totalSearch);
                 data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
         
-                std::string filePath = std::format("{}/{}_{}.bin", dirPath, fileName, part);
-
-                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Checking file exists:{}", filePath).c_str());
-                if(part > 0 && !base::FileExists(filePath))
-                {
-                    NotificationModule_AddInfoNotification("Dump complete!");
-                    break;
-                }
-        
                 MemoryList<T> src;
-                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Loading:{}", filePath).c_str());
-                if(!base::LoadMemoryList<T>(filePath, src))
+                WHBLogPrintf(std::format("Loading:{} Offset:{:X}", filePath, totalSearch).c_str());
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Loading:{} Offset:{:X}", filePath, totalSearch).c_str());
+                unsigned int loaded = base::LoadMemoryList<T>(filePath, src, totalSearch);
+                if(loaded == 0)
                 {
-                    NotificationModule_AddErrorNotification(std::format("Failed to load memory list from file:{}", filePath).c_str());
+                    WHBLogPrintf(std::format("Failed to load memory list from file:{}", filePath).c_str());
                     break;
                 }
         
                 MemoryList<T> dist;
-                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Searching:{}", filePath).c_str());
+                WHBLogPrintf(std::format("Searching:{}bytes", src.size()).c_str());
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Searching:{}bytes", src.size()).c_str());
                 results += base::SearchMemoryList<T>(src, dist, cmp);
         
-                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Saving:{}", filePath).c_str());
-                if(!base::SaveMemoryList<T>(filePath, dist))
+                WHBLogPrintf(std::format("Saving:{} {}bytes", tempPath, dist.size()).c_str());
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Saving:{} {}bytes", tempPath, dist.size()).c_str());
+                if(!base::SaveMemoryList<T>(tempPath, dist))
                 {
-                    NotificationModule_AddErrorNotification(std::format("Failed to save memory list to file:{}", filePath).c_str());
+                    WHBLogPrintf(std::format("Failed to save memory list to file:{}", filePath).c_str());
                     break;
                 }
-                part++;
+                totalSearch += loaded;
+        
+                // デバッグ用ログを追加
+                WHBLogPrintf("Total search progress: %u", totalSearch);
+                WHBLogPrintf("Current results count: %d", results);
             }
+            WHBLogPrintf("Broke");
+            base::RemoveFile(filePath);
+            base::RenameFile(tempPath, filePath);
             NotificationModule_FinishDynamicNotification(handleSub, 0.1f);
             NotificationModule_FinishDynamicNotification(handleMain, 0.1f);
             return results;

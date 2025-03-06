@@ -3,10 +3,12 @@
 // std
 #include <algorithm>
 #include <cstring> // memset
+#include <fcntl.h>
 
 // wut
 #include <arpa/inet.h> // ネット関連の処理に必要
 #include <nn/ac.h> // IPアドレスの取得に必要
+#include <sys/socket.h>
 #include <unistd.h> // close関数に必要
 #include <whb/log.h>
 
@@ -56,7 +58,11 @@ namespace TCPServer
         WHBLogPrintf("Initializing network functions");
         nn::ac::Initialize();
         nn::ac::Connect();
-        nn::ac::GetAssignedAddress(&hostIpAddress);
+        if(nn::ac::GetAssignedAddress(&hostIpAddress) != 0)
+        {
+            WHBLogPrintf("Failed to get IP address");
+            return;
+        }
         WHBLogPrintf("Network functions initialized");
     }
 
@@ -112,18 +118,26 @@ namespace TCPServer
     {
         WHBLogPrintf("Ending TCP server");
 
-        tcpServer.request_stop();
-
         if(clientSocket != -1)
         {
+            fcntl(clientSocket, F_SETFL, O_NONBLOCK);
+            shutdown(clientSocket, 0);
             close(clientSocket);
             clientSocket = -1; // クライアントソケットをリセット
         }
 
         if(serverSocket != -1)
         {
+            fcntl(serverSocket, F_SETFL, O_NONBLOCK);
+            shutdown(serverSocket, 0);
             close(serverSocket);
             serverSocket = -1;  // サーバーソケットをリセット
+        }
+
+        if (tcpServer.joinable())
+        {
+            tcpServer.request_stop();
+            tcpServer.join();
         }
 
         WHBLogPrintf("Server ended");
@@ -136,7 +150,7 @@ namespace TCPServer
         {
             WHBLogPrintf("Waiting to accept client");
             clientSocket = accept(serverSocket, NULL, NULL);
-            WHBLogPrintf("Client connected");
+            WHBLogPrintf("Client connected:%X", clientSocket);
         }
     }
 

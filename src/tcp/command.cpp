@@ -159,7 +159,6 @@ namespace TCPServer
                     break;
                 }
 
-                bytes response; // 応答
                 response.push_back(RESPONSE_SUCCESS);
 
                 for(unsigned int i = 0; i < writeSize; i++) // すべてのデータを書き込むまでループ
