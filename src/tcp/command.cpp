@@ -113,7 +113,7 @@ namespace TCPServer
                 dataIndex += sizeof(startAddress);
                 uint32_t readSize = data.get<uint32_t>(dataIndex); // 読み取るサイズを取得
 
-                if(readSize > freeMemorySize) // 読み取るデータが長過ぎれば中止
+                if(readSize > FREE_MEMORY_SIZE) // 読み取るデータが長過ぎれば中止
                 {
                     WHBLogPrintf("%s failed: Data is too long", commandStr.c_str()); // データが長すぎます
                     RepsonseFailed(socket);
@@ -155,7 +155,7 @@ namespace TCPServer
                 values.assign(data.begin() + dataIndex, data.end());  // 書き込む値を取得
                 uint32_t writeSize = values.size(); // 書き込むデータの長さ
 
-                if(writeSize > freeMemorySize) // 書き込むデータが長過ぎれば中止
+                if(writeSize > FREE_MEMORY_SIZE) // 書き込むデータが長過ぎれば中止
                 {
                     WHBLogPrintf("%s is Failed: Data is too long", commandStr.c_str()); // データが長すぎます
                     RepsonseFailed(socket);
@@ -352,7 +352,7 @@ namespace TCPServer
                     case VALUE_INT64:
                     {
                         MemoryList<int64_t> src;
-                        int64_t results;
+                        int32_t results;
                         results = advanced::SearchMemory<int64_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
@@ -360,7 +360,7 @@ namespace TCPServer
                     case VALUE_UINT64:
                     {
                         MemoryList<uint64_t> src;
-                        uint64_t results;
+                        int32_t results;
                         results = advanced::SearchMemory<uint64_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
