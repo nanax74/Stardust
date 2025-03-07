@@ -61,15 +61,15 @@ namespace TCPServer
 {
     void RepsonseFailed(int32_t socket)
     {
-        bytes response;
+        Bytes response;
         response.append(RESPONSE_FAILED); // 失敗応答
         SendPacket(socket, response, DATA_TYPE_RESPONSE);
     }
 
     // コマンドを処理
-    void ProcessCommand(int32_t socket, bytes& data)
+    void ProcessCommand(int32_t socket, Bytes& data)
     {
-        bytes response;
+        Bytes response;
 
         uint32_t dataLength = data.size();
 
@@ -151,7 +151,7 @@ namespace TCPServer
 
                 uint32_t startAddress = data.get<uint32_t>(dataIndex); // 書き込むメモリアドレスを取得
                 dataIndex += sizeof(startAddress);
-                bytes values; // 書き込む値のバッファ
+                Bytes values; // 書き込む値のバッファ
                 values.assign(data.begin() + dataIndex, data.end());  // 書き込む値を取得
                 uint32_t writeSize = values.size(); // 書き込むデータの長さ
 
@@ -162,7 +162,7 @@ namespace TCPServer
                     break;
                 }
 
-                response.push_back(RESPONSE_SUCCESS);
+                response.append(RESPONSE_SUCCESS);
 
                 for(uint32_t i = 0; i < writeSize; i++) // すべてのデータを書き込むまでループ
                 {
@@ -187,11 +187,11 @@ namespace TCPServer
                 // 開始アドレス + サーチする長さ + サーチする値 (例:10000000 00001000 3F800000 -> 10000000から1000byteの範囲で値が3F800000のアドレスが検索される)
                 if(dataSize < DATA_HEDDER + (int32_t)sizeof(uint32_t) * 3) break;
 
-                uint32_t startAddress = data.get<uint32_t>(DATA_HEDDER);  // 書き込むメモリアドレスを取得
-                uint32_t searchSize = data.get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress));
-                uint32_t searchValue = data.get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress) + (int32_t)sizeof(searchSize));
+                uint32_t startAddress = data.Get<uint32_t>(DATA_HEDDER);  // 書き込むメモリアドレスを取得
+                uint32_t searchSize = data.Get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress));
+                uint32_t searchValue = data.Get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress) + (int32_t)sizeof(searchSize));
 
-                bytes response;
+                Bytes response;
             
                 for(uint32_t i = 0; i < searchSize / sizeof(uint32_t); i++)
                 {
@@ -201,7 +201,7 @@ namespace TCPServer
                         uint32_t value = ReadMemory<uint32_t>(address);
                         if(value == searchValue)
                         {
-                            response.append(address);
+                            response.Append(address);
                         }
                     }
                     else

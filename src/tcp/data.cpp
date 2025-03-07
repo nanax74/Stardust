@@ -16,7 +16,7 @@ using namespace std;
 
 namespace data
 {
-    int32_t SendAll(int32_t socket, bytes& data)
+    int32_t SendAll(int32_t socket, Bytes& data)
     {
         uint32_t size = data.size(); // 送信するデータのサイズ
 
@@ -47,7 +47,7 @@ namespace data
         return sent; // 送信成功
     }
 
-    int32_t ReceiveAll(int32_t socket, bytes& data)
+    int32_t ReceiveAll(int32_t socket, Bytes& data)
     {
         uint32_t size = data.size(); // 受信するデータのサイズ
 
@@ -78,7 +78,7 @@ namespace data
         return received; // 送信成功
     }
 
-    int32_t SendPacket(int32_t socket, bytes& data, uint32_t type)
+    int32_t SendPacket(int32_t socket, Bytes& data, uint32_t type)
     {
         uint32_t size = data.size();
 
@@ -93,7 +93,7 @@ namespace data
             return -1;
         }
 
-        bytes header;
+        Bytes header;
         header.append(type);
         header.append(size);
 
@@ -103,11 +103,11 @@ namespace data
         return SendAll(socket, data); // データを送信
     }
 
-    int32_t ReceivePacket(int32_t socket, bytes& data, uint32_t& type)
+    int32_t ReceivePacket(int32_t socket, Bytes& data, uint32_t& type)
     {
         size_t headerSize = sizeof(uint32_t) * 2; // データのサイズ
 
-        bytes header; 
+        Bytes header; 
         header.resize(headerSize);
 
         int32_t result = ReceiveAll(socket, header);

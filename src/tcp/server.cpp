@@ -168,7 +168,7 @@ namespace TCPServer
         int32_t result; // 関数の返り値を格納する変数
 
         // データを受け取るためのバッファ
-        bytes data;
+        Bytes data;
         uint32_t type;
 
         result = ReceivePacket(clientSocket, data, type); // データを受け取る

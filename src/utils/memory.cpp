@@ -284,7 +284,7 @@ namespace memory
             while (remaining > 0)
             {
                 NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
-                bytes progress;
+                Bytes progress;
                 progress.append(totalDump);
                 data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
 
@@ -337,7 +337,7 @@ namespace memory
             while (true)
             {
                 NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
-                bytes progress;
+                Bytes progress;
                 progress.append(totalSearch);
                 data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
         

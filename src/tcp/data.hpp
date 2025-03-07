@@ -14,11 +14,11 @@
 
 namespace data
 {
-    int32_t SendAll(int32_t socket, bytes& buffer);
-    int32_t ReceiveAll(int32_t socket, bytes& buffer);
+    int32_t SendAll(int32_t socket, Bytes& buffer);
+    int32_t ReceiveAll(int32_t socket, Bytes& buffer);
 
-    int32_t SendPacket(int32_t socket, bytes& data, uint32_t type);
-    int32_t ReceivePacket(int32_t socket, bytes& data, uint32_t& type);
+    int32_t SendPacket(int32_t socket, Bytes& data, uint32_t type);
+    int32_t ReceivePacket(int32_t socket, Bytes& data, uint32_t& type);
 
     class intEx // バイトオーダー変換ができる拡張クラス
     {
