@@ -61,6 +61,8 @@ namespace memory
         template <typename T>
         void WriteMemorySafe(uint32_t address, T value);
 
+        void WriteKernel(uint32_t address, uint32_t value);
+
         // バイナリ形式でファイルに保存する関数
         template <typename T>
         bool SaveMemoryList(const std::string& distPath, const MemoryList<T>& src);

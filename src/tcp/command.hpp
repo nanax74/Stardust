@@ -9,9 +9,9 @@
 
 #define HEADER_SIZE 1
 
-#define RESPONSE_SUCCESS 0x00 // 成功応答
-#define RESPONSE_VALUE 0x01 // 値応答
-#define RESPONSE_FAILED 0xFF // 失敗応答
+const uint8_t RESPONSE_SUCCESS = 0x00; // 成功応答
+const uint8_t RESPONSE_VALUE   = 0x01; // 値応答
+const uint8_t RESPONSE_FAILED  = 0xFF; // 失敗応答
 
 namespace TCPServer
 {

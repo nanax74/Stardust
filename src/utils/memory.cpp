@@ -3,6 +3,10 @@
 // std
 #include <cstdio>
 
+// wut
+#include <kernel/kernel.h>
+#include <coreinit/cache.h>
+
 using namespace std;
 
 namespace memory
@@ -84,6 +88,19 @@ namespace memory
         template void WriteMemorySafe<uint64_t>(uint32_t, uint64_t);
         template void WriteMemorySafe<float>(uint32_t, float);
         template void WriteMemorySafe<double>(uint32_t, double);
+
+        void WriteKernel(uint32_t address, uint32_t value)
+        {
+            if(OSIsAddressValid(address))
+            {
+                // アドレスを物理アドレスに変換
+                unsigned int physicalAddress = (unsigned int) OSEffectiveToPhysical(address);
+            
+                KernelCopyData(physicalAddress, OSEffectiveToPhysical((unsigned int)&value), 4);
+                DCFlushRange((void *)address, 4);
+                ICInvalidateRange((void *)address, 4);
+            }
+        }
 
         bool RemoveFile(std::string& filePath)
         {

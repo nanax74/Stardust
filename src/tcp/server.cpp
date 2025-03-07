@@ -22,7 +22,7 @@ using namespace data;
 
 namespace TCPServer
 {
-    #define TCP_PORT 10000  // クライアント側はこのポートで接続する
+    const uint16_t TCP_PORT = 10000;  // クライアント側はこのポートで接続する
 
     jthread tcpServer;  // TCPサーバー用のスレッド
 

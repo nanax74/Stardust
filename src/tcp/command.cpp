@@ -15,22 +15,22 @@
 #include "../utils/math.hpp"
 #include "../utils/memory.hpp"
 
-#define COMMAND_READ 0x00 // バイト数制限付き
-#define COMMAND_WRITE 0x01 // バイト数制限付き
-#define COMMAND_SEARCH_SPEC 0x02 // Todo
-#define COMMAND_SEARCH_DUMP 0x03 // サーチ用のダンプ
-#define COMMAND_SEARCH_UNKN 0x04 // ダンプからサーチ
+const uint8_t COMMAND_READ        = 0x00; // バイト数制限付き
+const uint8_t COMMAND_WRITE       = 0x01; // バイト数制限付き
+const uint8_t COMMAND_SEARCH_SPEC = 0x02; // Todo
+const uint8_t COMMAND_SEARCH_DUMP = 0x03; // サーチ用のダンプ
+const uint8_t COMMAND_SEARCH_UNKN = 0x04; // ダンプからサーチ
 
-#define VALUE_INT8 0x00
-#define VALUE_UINT8 0x01
-#define VALUE_INT16 0x02
-#define VALUE_UINT16 0x03
-#define VALUE_INT32 0x04
-#define VALUE_UINT32 0x05
-#define VALUE_INT64 0x06
-#define VALUE_UINT64 0x07
-#define VALUE_FLOAT 0x08
-#define VALUE_DOUBLE 0x09
+const uint8_t VALUE_INT8   = 0x00;
+const uint8_t VALUE_UINT8  = 0x01;
+const uint8_t VALUE_INT16  = 0x02;
+const uint8_t VALUE_UINT16 = 0x03;
+const uint8_t VALUE_INT32  = 0x04;
+const uint8_t VALUE_UINT32 = 0x05;
+const uint8_t VALUE_INT64  = 0x06;
+const uint8_t VALUE_UINT64 = 0x07;
+const uint8_t VALUE_FLOAT  = 0x08;
+const uint8_t VALUE_DOUBLE = 0x09;
 
 using namespace std;
 using namespace memory;

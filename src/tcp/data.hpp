@@ -6,11 +6,11 @@
 // stardust
 #include "../utils/bytes.hpp"
 
-#define MAX_DATA_SIZE 0x10000 // データ本体の最大サイズ
+const uint32_t MAX_DATA_SIZE = 0x10000; // データ本体の最大サイズ
 
-#define DATA_TYPE_COMMAND 0x01
-#define DATA_TYPE_RESPONSE 0x02
-#define DATA_TYPE_PROGRESS 0x03
+const uint8_t DATA_TYPE_COMMAND  = 0x01;
+const uint8_t DATA_TYPE_RESPONSE = 0x02;
+const uint8_t DATA_TYPE_PROGRESS = 0x03;
 
 namespace data
 {
