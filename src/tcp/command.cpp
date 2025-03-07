@@ -21,14 +21,16 @@
 #define COMMAND_SEARCH_DUMP 0x03 // サーチ用のダンプ
 #define COMMAND_SEARCH_UNKN 0x04 // ダンプからサーチ
 
-#define VALUE_CHAR 0x00
-#define VALUE_UCHAR 0x01
-#define VALUE_SHORT 0x02
-#define VALUE_USHORT 0x03
-#define VALUE_INT 0x04
-#define VALUE_UINT 0x05
-#define VALUE_FLOAT 0x06
-#define VALUE_DOUBLE 0x07
+#define VALUE_INT8 0x00
+#define VALUE_UINT8 0x01
+#define VALUE_INT16 0x02
+#define VALUE_UINT16 0x03
+#define VALUE_INT32 0x04
+#define VALUE_UINT32 0x05
+#define VALUE_INT64 0x06
+#define VALUE_UINT64 0x07
+#define VALUE_FLOAT 0x08
+#define VALUE_DOUBLE 0x09
 
 using namespace std;
 using namespace memory;
@@ -228,34 +230,44 @@ namespace TCPServer
 
                 switch (valueType)
                 {
-                    case VALUE_CHAR:
+                    case VALUE_INT8:
                     {
                         advanced::DumpMemory<int8_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
-                    case VALUE_UCHAR:
+                    case VALUE_UINT8:
                     {
                         advanced::DumpMemory<uint8_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
-                    case VALUE_SHORT:
+                    case VALUE_INT16:
                     {
                         advanced::DumpMemory<int16_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
-                    case VALUE_USHORT:
+                    case VALUE_UINT16:
                     {
                         advanced::DumpMemory<uint16_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
-                    case VALUE_INT:
+                    case VALUE_INT32:
                     {
                         advanced::DumpMemory<int32_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
-                    case VALUE_UINT:
+                    case VALUE_UINT32:
                     {
                         advanced::DumpMemory<uint32_t>(socket, dirPath, "Search", address, size);
+                        break;
+                    }
+                    case VALUE_INT64:
+                    {
+                        advanced::DumpMemory<int64_t>(socket, dirPath, "Search", address, size);
+                        break;
+                    }
+                    case VALUE_UINT64:
+                    {
+                        advanced::DumpMemory<uint64_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     case VALUE_FLOAT:
@@ -289,7 +301,7 @@ namespace TCPServer
             
                 switch (valueType)
                 {
-                    case VALUE_CHAR:
+                    case VALUE_INT8:
                     {
                         MemoryList<int8_t> src;
                         int32_t results;
@@ -297,7 +309,7 @@ namespace TCPServer
                         response.append(results);
                         break;
                     }
-                    case VALUE_UCHAR:
+                    case VALUE_UINT8:
                     {
                         MemoryList<uint8_t> src;
                         int32_t results;
@@ -305,7 +317,7 @@ namespace TCPServer
                         response.append(results);
                         break;
                     }
-                    case VALUE_SHORT:
+                    case VALUE_INT16:
                     {
                         MemoryList<int16_t> src;
                         int32_t results;
@@ -313,7 +325,7 @@ namespace TCPServer
                         response.append(results);
                         break;
                     }
-                    case VALUE_USHORT:
+                    case VALUE_UINT16:
                     {
                         MemoryList<uint16_t> src;
                         int32_t results;
@@ -321,7 +333,7 @@ namespace TCPServer
                         response.append(results);
                         break;
                     }
-                    case VALUE_INT:
+                    case VALUE_INT32:
                     {
                         MemoryList<int32_t> src;
                         int32_t results;
@@ -329,11 +341,27 @@ namespace TCPServer
                         response.append(results);
                         break;
                     }
-                    case VALUE_UINT:
+                    case VALUE_UINT32:
                     {
                         MemoryList<uint32_t> src;
                         int32_t results;
                         results = advanced::SearchMemory<uint32_t>(socket, dirPath, "Search", cmp);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_INT64:
+                    {
+                        MemoryList<int64_t> src;
+                        int64_t results;
+                        results = advanced::SearchMemory<int64_t>(socket, dirPath, "Search", cmp);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_UINT64:
+                    {
+                        MemoryList<uint64_t> src;
+                        uint64_t results;
+                        results = advanced::SearchMemory<uint64_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }

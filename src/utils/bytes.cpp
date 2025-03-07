@@ -2,74 +2,78 @@
 
 using namespace std;
 
-// charをdataに追加
 void bytes::append(int8_t value)
 {
-    this->push_back(value);  // そのまま1バイトを追加
+    this->push_back(value);
 }
 
-// unsigned charをdataに追加
 void bytes::append(uint8_t value)
 {
-    this->push_back(value);  // そのまま1バイトを追加
+    this->push_back(value);
 }
 
-// shortを2バイトに分けてdataに追加
 void bytes::append(int16_t value)
 {
-    // 2バイト分のデータを追加
     for(int32_t i = 0; i < 2; ++i)
     {
-        this->push_back((value >> (8 * (1 - i))) & 0xFF);  // バイトごとに分けて追加
+        this->push_back((value >> (8 * (1 - i))) & 0xFF);
     }
 }
 
-// unsigned shortを2バイトに分けてdataに追加
 void bytes::append(uint16_t value)
 {
-    // 2バイト分のデータを追加
     for(int32_t i = 0; i < 2; ++i)
     {
-        this->push_back((value >> (8 * (1 - i))) & 0xFF);  // バイトごとに分けて追加
+        this->push_back((value >> (8 * (1 - i))) & 0xFF);
     }
 }
 
-// intを4バイトに分けてdataに追加
 void bytes::append(int32_t value)
 {
-    // 4バイト分のデータを追加
     for(int32_t i = 0; i < 4; ++i)
     {
-        this->push_back((value >> (8 * (3 - i))) & 0xFF); // バイトごとに分けて追加
+        this->push_back((value >> (8 * (3 - i))) & 0xFF);
     }
 }
 
-// unsigned intを4バイトに分けてdataに追加
 void bytes::append(uint32_t value)
 {
-    // 4バイト分のデータを追加
     for(int32_t i = 0; i < 4; ++i)
     {
-        this->push_back((value >> (8 * (3 - i))) & 0xFF); // バイトごとに分けて追加
+        this->push_back((value >> (8 * (3 - i))) & 0xFF);
     }
 }
 
-// longを8バイトに分けてdataに追加
-void bytes::append(long value)
+void bytes::append(int64_t value)
 {
-    // 4バイト分のデータを追加
     for(int32_t i = 0; i < 8; ++i)
     {
-        this->push_back((value >> (8 * (7 - i))) & 0xFF); // バイトごとに分けて追加
+        this->push_back((value >> (8 * (7 - i))) & 0xFF);
     }
 }
 
-// unsigned longを8バイトに分けてdataに追加
-void bytes::append(unsigned long value)
+void bytes::append(uint64_t value)
 {
-    // 4バイト分のデータを追加
     for(int32_t i = 0; i < 8; ++i)
     {
-        this->push_back((value >> (8 * (7 - i))) & 0xFF); // バイトごとに分けて追加
+        this->push_back((value >> (8 * (7 - i))) & 0xFF);
+    }
+}
+
+void bytes::append(float value)
+{
+    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&value);
+    for (int i = 0; i < 4; ++i)
+    {
+        this->push_back(ptr[i]);
+    }
+}
+
+void bytes::append(double value)
+{
+    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&value);
+    for (int i = 0; i < 8; ++i)
+    {
+        this->push_back(ptr[i]);
     }
 }

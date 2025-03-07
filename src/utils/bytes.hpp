@@ -12,8 +12,10 @@ class bytes : public std::vector<uint8_t>
         void append(uint16_t value);
         void append(int32_t value);
         void append(uint32_t value);
-        void append(long value);
-        void append(unsigned long value);
+        void append(int64_t value);
+        void append(uint64_t value);
+        void append(float value);
+        void append(double value);
 
         // 特定のオフセット値を取得
         template <typename T>
