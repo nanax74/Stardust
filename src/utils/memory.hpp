@@ -20,14 +20,14 @@
 
 namespace memory
 {
-    const unsigned int freeMemorySize = 0x100000;
+    const uint32_t freeMemorySize = 0x100000;
 
     // アドレスと値のペア
     #pragma pack(push, 1) // アラインメントを1に設定
     template <typename T>
     struct MemoryEntry
     {
-        unsigned int address;
+        uint32_t address;
         T value;
     };
     #pragma pack(pop)
@@ -47,16 +47,16 @@ namespace memory
         bool RenameFile(const std::string& oldPath, const std::string& newPath);
         
         // ファイルサイズを取得
-        unsigned int GetFileSize(const std::string& filePath);
+        uint32_t GetFileSize(const std::string& filePath);
 
         template <typename T>
-        T ReadMemory(unsigned int address)
+        T ReadMemory(uint32_t address)
         {
             return *reinterpret_cast<T*>(address);
         }
 
         template <typename T>
-        T ReadMemorySafe(unsigned int address)
+        T ReadMemorySafe(uint32_t address)
         {
             if(OSIsAddressValid(address))
             {
@@ -67,13 +67,13 @@ namespace memory
         }
 
         template <typename T>
-        void WriteMemory(unsigned int address, T value)
+        void WriteMemory(uint32_t address, T value)
         {
             *reinterpret_cast<T*>(address) = value;
         }
 
         template <typename T>
-        void WriteMemorySafe(unsigned int address, T value)
+        void WriteMemorySafe(uint32_t address, T value)
         {
             if(OSIsAddressValid(address))
             {
@@ -95,7 +95,7 @@ namespace memory
 
         // バイナリ形式でファイルから読み込む関数
         template <typename T>
-        size_t LoadMemoryList(const std::string& srcPath, MemoryList<T>& dist, unsigned int offset)
+        size_t LoadMemoryList(const std::string& srcPath, MemoryList<T>& dist, uint32_t offset)
         {
             std::ifstream file(srcPath, std::ios::binary);
             if (!file)
@@ -106,8 +106,8 @@ namespace memory
             
             size_t entrySize = sizeof(MemoryEntry<T>);
             
-            unsigned int offsetSize = offset * entrySize;
-            unsigned int readSize = GetFileSize(srcPath);
+            uint32_t offsetSize = offset * entrySize;
+            uint32_t readSize = GetFileSize(srcPath);
 
             if(readSize <= offsetSize)
             {
@@ -117,7 +117,7 @@ namespace memory
 
             readSize = readSize - offsetSize;
             readSize = std::min(readSize, freeMemorySize);  // 必要に応じて読み込むサイズを制限
-            unsigned int readElements = readSize / entrySize;
+            uint32_t readElements = readSize / entrySize;
 
             // メモリリストのデータを読み込む
             dist.resize(readElements);
@@ -133,9 +133,9 @@ namespace memory
 
         // srcと現在のメモリをopで比較し、結果をdistに追加
         template <typename T>
-        int SearchMemoryList(MemoryList<T>& src, MemoryList<T>& dist, CompareFlags op)
+        int32_t SearchMemoryList(MemoryList<T>& src, MemoryList<T>& dist, CompareFlags op)
         {
-            int count = 0;
+            int32_t count = 0;
             if(src.size() > 0)
             {
                 for(MemoryEntry<T> item : src)
@@ -154,11 +154,11 @@ namespace memory
 
         // メモリを取得
         template <typename T>
-        void GetMemoryList(unsigned int address, unsigned int size, MemoryList<T>& dist)
+        void GetMemoryList(uint32_t address, uint32_t size, MemoryList<T>& dist)
         {
-            for(unsigned int i = 0; i < size; i += sizeof(T))
+            for(uint32_t i = 0; i < size; i += sizeof(T))
             {
-                unsigned int currentAddress = address + i;
+                uint32_t currentAddress = address + i;
                 dist.push_back({currentAddress, ReadMemory<T>(currentAddress)});
             }
         }
@@ -167,7 +167,7 @@ namespace memory
     namespace advanced
     {
         template <typename T>
-        void DumpMemory(int socket, std::string& dirPath, std::string fileName, unsigned int address, unsigned int size)
+        void DumpMemory(int32_t socket, std::string& dirPath, std::string fileName, uint32_t address, uint32_t size)
         {
             std::string distPath = std::format("{}/{}.bin", dirPath, fileName);
 
@@ -178,9 +178,9 @@ namespace memory
             NotificationModuleHandle handleMain;
             NotificationModule_AddDynamicNotification("Dumping...", &handleMain);
             
-            unsigned int totalDump = 0;
-            unsigned int remaining = size;
-            unsigned int currentAddress = address;
+            uint32_t totalDump = 0;
+            uint32_t remaining = size;
+            uint32_t currentAddress = address;
 
             while (remaining > 0)
             {
@@ -189,9 +189,9 @@ namespace memory
                 progress.append(totalDump);
                 data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
 
-                unsigned int chunkSize = std::min(freeMemorySize, remaining);
+                uint32_t chunkSize = std::min(freeMemorySize, remaining);
 
-                unsigned int endAddress = currentAddress + chunkSize;
+                uint32_t endAddress = currentAddress + chunkSize;
                 NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Reading:{:X}~{:X}", currentAddress, endAddress).c_str());
                 WHBLogPrintf("Dumping:%X~%X", currentAddress, endAddress);
         
@@ -210,7 +210,7 @@ namespace memory
         }
 
         template <typename T>
-        int SearchMemory(int socket, std::string& dirPath, std::string fileName, CompareFlags cmp)
+        int32_t SearchMemory(int32_t socket, std::string& dirPath, std::string fileName, CompareFlags cmp)
         {
             NotificationModuleHandle handleSub;
             NotificationModule_AddDynamicNotification("Starting Search...", &handleSub);
@@ -221,9 +221,9 @@ namespace memory
             std::string filePath = std::format("{}/{}.bin", dirPath, fileName);
             std::string tempPath = std::format("{}/temp.bin", dirPath);
         
-            int results = 0;
+            int32_t results = 0;
         
-            unsigned int totalSearch = 0;
+            uint32_t totalSearch = 0;
             while (true)
             {
                 NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
@@ -234,7 +234,7 @@ namespace memory
                 MemoryList<T> src;
                 WHBLogPrintf(std::format("Loading:{} Offset:{:X}", filePath, totalSearch).c_str());
                 NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Loading:{} Offset:{:X}", filePath, totalSearch).c_str());
-                unsigned int loaded = base::LoadMemoryList<T>(filePath, src, totalSearch);
+                uint32_t loaded = base::LoadMemoryList<T>(filePath, src, totalSearch);
                 if(loaded == 0)
                 {
                     WHBLogPrintf(std::format("Failed to load memory list from file:{}", filePath).c_str());

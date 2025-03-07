@@ -1,16 +1,17 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
-class bytes : public std::vector<unsigned char>
+class bytes : public std::vector<uint8_t>
 {
     public:
-        void append(char value);
-        void append(unsigned char value);
-        void append(short value);
-        void append(unsigned short value);
-        void append(int value);
-        void append(unsigned int value);
+        void append(int8_t value);
+        void append(uint8_t value);
+        void append(int16_t value);
+        void append(uint16_t value);
+        void append(int32_t value);
+        void append(uint32_t value);
         void append(long value);
         void append(unsigned long value);
 

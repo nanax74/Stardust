@@ -26,9 +26,9 @@ namespace TCPServer
 
     jthread tcpServer;  // TCPサーバー用のスレッド
 
-    int serverSocket = -1; // サーバー側のソケット
-    int clientSocket = -1; // クライアント側のソケット
-    unsigned int hostIpAddress = 0; // WiiUのIPアドレスを格納する変数
+    int32_t serverSocket = -1; // サーバー側のソケット
+    int32_t clientSocket = -1; // クライアント側のソケット
+    uint32_t hostIpAddress = 0; // WiiUのIPアドレスを格納する変数
 
     // 初期化
     void Init()
@@ -165,11 +165,11 @@ namespace TCPServer
 
     void ReceiveFromClient()
     {
-        int result; // 関数の返り値を格納する変数
+        int32_t result; // 関数の返り値を格納する変数
 
         // データを受け取るためのバッファ
         bytes data;
-        unsigned int type;
+        uint32_t type;
 
         result = ReceivePacket(clientSocket, data, type); // データを受け取る
         if(result == 0)

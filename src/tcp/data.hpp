@@ -14,29 +14,29 @@
 
 namespace data
 {
-    int SendAll(int socket, bytes& buffer);
-    int ReceiveAll(int socket, bytes& buffer);
+    int32_t SendAll(int32_t socket, bytes& buffer);
+    int32_t ReceiveAll(int32_t socket, bytes& buffer);
 
-    int SendPacket(int socket, bytes& data, unsigned int type);
-    int ReceivePacket(int socket, bytes& data, unsigned int& type);
+    int32_t SendPacket(int32_t socket, bytes& data, uint32_t type);
+    int32_t ReceivePacket(int32_t socket, bytes& data, uint32_t& type);
 
     class intEx // バイトオーダー変換ができる拡張クラス
     {
         private:
-            int value;
+            int32_t value;
 
         public:
-            intEx(int v) : value(v) {}
+            intEx(int32_t v) : value(v) {}
 
-            int get();
-            void set(int v);
+            int32_t get();
+            void set(int32_t v);
 
             intEx& reverse();
 
             // intExをintに変換
-            operator int() const;
+            operator int32_t() const;
         
             // intをintExに代入
-            intEx& operator=(int v);
+            intEx& operator=(int32_t v);
     };
 }

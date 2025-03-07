@@ -40,7 +40,7 @@ namespace memory
             }
         }
 
-        unsigned int GetFileSize(const std::string& filePath)
+        uint32_t GetFileSize(const std::string& filePath)
         {
             // ファイルをバイナリモードで開く
             std::ifstream file(filePath, std::ios::binary);
@@ -56,7 +56,7 @@ namespace memory
             file.seekg(0, std::ios::end);
         
             // 現在のポインタ位置（ファイルサイズ）を取得
-            unsigned int fileSize = static_cast<unsigned int>(file.tellg());
+            uint32_t fileSize = static_cast<uint32_t>(file.tellg());
         
             // ファイルを閉じる
             file.close();

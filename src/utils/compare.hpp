@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <type_traits>
 
-enum class CompareFlags : unsigned char
+enum class CompareFlags : uint8_t
 {
     NONE = 0x00,
     EQ = 0x01, // Equal
@@ -16,7 +17,7 @@ enum class CompareFlags : unsigned char
 // ビット演算のオーバーロード
 constexpr CompareFlags operator|(CompareFlags a, CompareFlags b)
 {
-    return static_cast<CompareFlags>(static_cast<unsigned char>(a) | static_cast<unsigned char>(b));
+    return static_cast<CompareFlags>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
 }
 
 constexpr CompareFlags& operator|=(CompareFlags& a, CompareFlags b)
@@ -26,7 +27,7 @@ constexpr CompareFlags& operator|=(CompareFlags& a, CompareFlags b)
 
 constexpr CompareFlags operator&(CompareFlags a, CompareFlags b)
 {
-    return static_cast<CompareFlags>(static_cast<unsigned char>(a) & static_cast<unsigned char>(b));
+    return static_cast<CompareFlags>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
 }
 
 constexpr CompareFlags& operator&=(CompareFlags& a, CompareFlags b)

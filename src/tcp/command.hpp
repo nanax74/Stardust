@@ -15,5 +15,5 @@
 
 namespace TCPServer
 {
-    void ProcessCommand(int socket, bytes& data);
+    void ProcessCommand(int32_t socket, bytes& data);
 }

@@ -16,18 +16,18 @@ using namespace std;
 
 namespace data
 {
-    int SendAll(int socket, bytes& data)
+    int32_t SendAll(int32_t socket, bytes& data)
     {
-        unsigned int size = data.size(); // 送信するデータのサイズ
+        uint32_t size = data.size(); // 送信するデータのサイズ
 
         WHBLogPrintf("Sending:%dbytes", size);
         
-        unsigned int sent = 0; // 送信済みバイト数
+        uint32_t sent = 0; // 送信済みバイト数
 
         // 送信し終わるまでループ
         while(sent < size)
         {
-            int bytes = send(socket, data.data() + sent, size - sent, 0); // 送信
+            int32_t bytes = send(socket, data.data() + sent, size - sent, 0); // 送信
             if(bytes <= 0) // 戻り値をチェック
             {
                 if(bytes == 0) // クライアントが切断
@@ -47,18 +47,18 @@ namespace data
         return sent; // 送信成功
     }
 
-    int ReceiveAll(int socket, bytes& data)
+    int32_t ReceiveAll(int32_t socket, bytes& data)
     {
-        unsigned int size = data.size(); // 受信するデータのサイズ
+        uint32_t size = data.size(); // 受信するデータのサイズ
 
         WHBLogPrintf("Receiving:%dbytes", size);
 
-        unsigned int received = 0; // 受信済みバイト数
+        uint32_t received = 0; // 受信済みバイト数
 
         // 受信し終わるまでループ
         while(received < size)
         {
-            int bytes = recv(socket, data.data() + received, size - received, 0); // 受信
+            int32_t bytes = recv(socket, data.data() + received, size - received, 0); // 受信
             if(bytes <= 0) // 戻り値をチェック
             {
                 if(bytes == 0) // クライアントが切断
@@ -78,9 +78,9 @@ namespace data
         return received; // 送信成功
     }
 
-    int SendPacket(int socket, bytes& data, unsigned int type)
+    int32_t SendPacket(int32_t socket, bytes& data, uint32_t type)
     {
-        unsigned int size = data.size();
+        uint32_t size = data.size();
 
         if(data.empty()) // データが空
         {
@@ -97,24 +97,24 @@ namespace data
         header.append(type);
         header.append(size);
 
-        int result = SendAll(socket, header); // ヘッダを送信
+        int32_t result = SendAll(socket, header); // ヘッダを送信
         if(result <= 0) return result; // 送信失敗
 
         return SendAll(socket, data); // データを送信
     }
 
-    int ReceivePacket(int socket, bytes& data, unsigned int& type)
+    int32_t ReceivePacket(int32_t socket, bytes& data, uint32_t& type)
     {
-        size_t headerSize = sizeof(unsigned int) * 2; // データのサイズ
+        size_t headerSize = sizeof(uint32_t) * 2; // データのサイズ
 
         bytes header; 
         header.resize(headerSize);
 
-        int result = ReceiveAll(socket, header);
+        int32_t result = ReceiveAll(socket, header);
         if(result <= 0) return result; // 受信失敗
 
-        type = header.get<unsigned int>(0);
-        unsigned int length = header.get<unsigned int>(sizeof(type));
+        type = header.get<uint32_t>(0);
+        uint32_t length = header.get<uint32_t>(sizeof(type));
 
         if(length > MAX_DATA_SIZE)
         {
@@ -129,12 +129,12 @@ namespace data
         return ReceiveAll(socket, data);
     }
 
-    int intEx::get()
+    int32_t intEx::get()
     {
         return value;
     }
 
-    void intEx::set(int v)
+    void intEx::set(int32_t v)
     {
         value = v;
     }
@@ -142,19 +142,19 @@ namespace data
     // バイトオーダー反転
     intEx& intEx::reverse()
     {
-        unsigned char* bytePtr = reinterpret_cast<unsigned char*>(&value);
-        std::reverse(bytePtr, bytePtr + sizeof(int));
+        uint8_t* bytePtr = reinterpret_cast<uint8_t*>(&value);
+        std::reverse(bytePtr, bytePtr + sizeof(int32_t));
         return *this;
     }
 
     // intExをintに変換
-    intEx::operator int() const
+    intEx::operator int32_t() const
     {
         return value;
     }
 
     // intをintExに代入
-    intEx& intEx::operator=(int v)
+    intEx& intEx::operator=(int32_t v)
     {
         value = v;
         return *this;

@@ -1,6 +1,7 @@
 #include "command.hpp"
 
 // std
+#include <cstdint>
 #include <map>
 #include <filesystem>
 
@@ -34,7 +35,7 @@ using namespace memory;
 using namespace data;
 
 // コマンドの種類
-map<unsigned char, string> commandMap =
+map<uint8_t, string> commandMap =
 {
     {COMMAND_READ, "Read"},
     {COMMAND_WRITE, "Write"},
@@ -44,7 +45,7 @@ map<unsigned char, string> commandMap =
 };
 
 // コマンドの種類を文字列で取得
-string GetCommandTypeStr(unsigned char command)
+string GetCommandTypeStr(uint8_t command)
 {
     auto it = commandMap.find(command);
     if(it != commandMap.end())
@@ -56,7 +57,7 @@ string GetCommandTypeStr(unsigned char command)
 
 namespace TCPServer
 {
-    void RepsonseFailed(int socket)
+    void RepsonseFailed(int32_t socket)
     {
         bytes response;
         response.append(RESPONSE_FAILED); // 失敗応答
@@ -64,11 +65,11 @@ namespace TCPServer
     }
 
     // コマンドを処理
-    void ProcessCommand(int socket, bytes& data)
+    void ProcessCommand(int32_t socket, bytes& data)
     {
         bytes response;
 
-        unsigned int dataLength = data.size();
+        uint32_t dataLength = data.size();
 
         if(dataLength == 0)  // コマンドのサイズが0なら中止
         {
@@ -76,20 +77,20 @@ namespace TCPServer
             return;
         };
 
-        unsigned char command = data[0];  // コマンドの種類
+        uint8_t command = data[0];  // コマンドの種類
 
         string commandStr = GetCommandTypeStr(command); // コマンドの種類を文字列に変換
         WHBLogPrintf("CommandType:%s", commandStr.c_str());  // コマンドの種類を出力
 
         // 受け取ったコマンドを文字列として出力
         ostringstream os;
-        for(unsigned int i = 0; i < dataLength; i++) // コマンドの長さの分だけ繰り返す
+        for(uint32_t i = 0; i < dataLength; i++) // コマンドの長さの分だけ繰り返す
         {
-            os << hex << setw(2) << setfill('0') << (int)data[i]; // 文字列ストリームにバイトを追加
+            os << hex << setw(2) << setfill('0') << (int32_t)data[i]; // 文字列ストリームにバイトを追加
         }
         WHBLogPrintf("Command:%s", os.str().c_str()); // 出力
 
-        unsigned int dataIndex = HEADER_SIZE;
+        uint32_t dataIndex = HEADER_SIZE;
 
         auto startTime = chrono::high_resolution_clock::now(); // 計測開始
 
@@ -99,16 +100,16 @@ namespace TCPServer
             {
                 // 開始アドレス + 読み取る長さ (例:10000000 00001000 -> 0x10000000から0x1000byte読み取られる)
                 
-                if(dataLength < sizeof(unsigned int) * 2) // コマンドの長さが足りなければ中止
+                if(dataLength < sizeof(uint32_t) * 2) // コマンドの長さが足りなければ中止
                 {
                     WHBLogPrintf("%s failed: Command is too short", commandStr.c_str());
                     RepsonseFailed(socket);
                     break;
                 }
 
-                unsigned int startAddress = data.get<unsigned int>(dataIndex);  // 読み取るアドレスを取得
+                uint32_t startAddress = data.get<uint32_t>(dataIndex);  // 読み取るアドレスを取得
                 dataIndex += sizeof(startAddress);
-                unsigned int readSize = data.get<unsigned int>(dataIndex); // 読み取るサイズを取得
+                uint32_t readSize = data.get<uint32_t>(dataIndex); // 読み取るサイズを取得
 
                 if(readSize > freeMemorySize) // 読み取るデータが長過ぎれば中止
                 {
@@ -117,12 +118,12 @@ namespace TCPServer
                     break;
                 }
 
-                for(unsigned int i = 0; i < readSize; i++) // すべてのデータを読み取るまでループ
+                for(uint32_t i = 0; i < readSize; i++) // すべてのデータを読み取るまでループ
                 {
-                    unsigned int address = startAddress + i; // 現在のアドレス
+                    uint32_t address = startAddress + i; // 現在のアドレス
                     if(OSIsAddressValid(address)) // アドレスが有効
                     {
-                        unsigned char value = base::ReadMemory<unsigned char>(address); // 1byteずつ読み取り
+                        uint8_t value = base::ReadMemory<uint8_t>(address); // 1byteずつ読み取り
                         response.append(value); // 応答に追加
                     }
                     else // 不正なアドレス
@@ -139,18 +140,18 @@ namespace TCPServer
             {
                 // 開始アドレス + 書き込む値 (例:10000000 3F80000040000000 -> 0x10000000に8byteの値0x3F80000040000000が書き込まれる)
 
-                if(dataLength < HEADER_SIZE + sizeof(unsigned int) + sizeof(unsigned char)) // コマンドの長さが足りなければ中止
+                if(dataLength < HEADER_SIZE + sizeof(uint32_t) + sizeof(uint8_t)) // コマンドの長さが足りなければ中止
                 {
                     WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
                     RepsonseFailed(socket);
                     break;
                 }
 
-                unsigned int startAddress = data.get<unsigned int>(dataIndex); // 書き込むメモリアドレスを取得
+                uint32_t startAddress = data.get<uint32_t>(dataIndex); // 書き込むメモリアドレスを取得
                 dataIndex += sizeof(startAddress);
                 bytes values; // 書き込む値のバッファ
                 values.assign(data.begin() + dataIndex, data.end());  // 書き込む値を取得
-                unsigned int writeSize = values.size(); // 書き込むデータの長さ
+                uint32_t writeSize = values.size(); // 書き込むデータの長さ
 
                 if(writeSize > freeMemorySize) // 書き込むデータが長過ぎれば中止
                 {
@@ -161,13 +162,13 @@ namespace TCPServer
 
                 response.push_back(RESPONSE_SUCCESS);
 
-                for(unsigned int i = 0; i < writeSize; i++) // すべてのデータを書き込むまでループ
+                for(uint32_t i = 0; i < writeSize; i++) // すべてのデータを書き込むまでループ
                 {
-                    unsigned int address = startAddress + i; // 現在のアドレス
+                    uint32_t address = startAddress + i; // 現在のアドレス
                     if(OSIsAddressValid(address)) // アドレスが有効
                     {
-                        unsigned char value = values[i]; // 書き込む値
-                        base::WriteMemory<unsigned char>(address, value); // アドレスに値を書き込む
+                        uint8_t value = values[i]; // 書き込む値
+                        base::WriteMemory<uint8_t>(address, value); // アドレスに値を書き込む
                     }
                     else // 不正なアドレス
                     {
@@ -182,20 +183,20 @@ namespace TCPServer
             {
                 /*
                 // 開始アドレス + サーチする長さ + サーチする値 (例:10000000 00001000 3F800000 -> 10000000から1000byteの範囲で値が3F800000のアドレスが検索される)
-                if(dataSize < DATA_HEDDER + (int)sizeof(unsigned int) * 3) break;
+                if(dataSize < DATA_HEDDER + (int32_t)sizeof(uint32_t) * 3) break;
 
-                unsigned int startAddress = data.get<unsigned int>(DATA_HEDDER);  // 書き込むメモリアドレスを取得
-                unsigned int searchSize = data.get<unsigned int>(DATA_HEDDER + (int)sizeof(startAddress));
-                unsigned int searchValue = data.get<unsigned int>(DATA_HEDDER + (int)sizeof(startAddress) + (int)sizeof(searchSize));
+                uint32_t startAddress = data.get<uint32_t>(DATA_HEDDER);  // 書き込むメモリアドレスを取得
+                uint32_t searchSize = data.get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress));
+                uint32_t searchValue = data.get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress) + (int32_t)sizeof(searchSize));
 
                 bytes response;
             
-                for(unsigned int i = 0; i < searchSize / sizeof(unsigned int); i++)
+                for(uint32_t i = 0; i < searchSize / sizeof(uint32_t); i++)
                 {
-                    unsigned int address = startAddress + i * sizeof(unsigned int);
+                    uint32_t address = startAddress + i * sizeof(uint32_t);
                     if(OSIsAddressValid(address))
                     {
-                        unsigned int value = ReadMemory<unsigned int>(address);
+                        uint32_t value = ReadMemory<uint32_t>(address);
                         if(value == searchValue)
                         {
                             response.append(address);
@@ -215,11 +216,11 @@ namespace TCPServer
                 // 開始アドレス + ダンプする長さ + 値の型 (例:10000000 00001000 05 -> 0x10000000からunsigned intで0x1000byte読み取りダンプする)
 
                 // コマンドから情報を取得
-                unsigned int address = data.get<unsigned int>(dataIndex);
+                uint32_t address = data.get<uint32_t>(dataIndex);
                 dataIndex += sizeof(address);
-                unsigned int size = data.get<unsigned int>(dataIndex);
+                uint32_t size = data.get<uint32_t>(dataIndex);
                 dataIndex += sizeof(size);
-                unsigned char valueType = data.get<unsigned char>(dataIndex);
+                uint8_t valueType = data.get<uint8_t>(dataIndex);
 
                 std::string dirPath = "fs:/vol/external01/wiiu/Stardust";
 
@@ -229,32 +230,32 @@ namespace TCPServer
                 {
                     case VALUE_CHAR:
                     {
-                        advanced::DumpMemory<char>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<int8_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     case VALUE_UCHAR:
                     {
-                        advanced::DumpMemory<unsigned char>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<uint8_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     case VALUE_SHORT:
                     {
-                        advanced::DumpMemory<short>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<int16_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     case VALUE_USHORT:
                     {
-                        advanced::DumpMemory<unsigned short>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<uint16_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     case VALUE_INT:
                     {
-                        advanced::DumpMemory<int>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<int32_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     case VALUE_UINT:
                     {
-                        advanced::DumpMemory<unsigned int>(socket, dirPath, "Search", address, size);
+                        advanced::DumpMemory<uint32_t>(socket, dirPath, "Search", address, size);
                         break;
                     }
                     case VALUE_FLOAT:
@@ -280,9 +281,9 @@ namespace TCPServer
                 // 開始アドレス(例:05 04 -> 前回のサーチ結果のサイズ分のメモリアドレスをunsigned intでサーチ)
 
                 // コマンドから情報を取得
-                unsigned char valueType = data.get<unsigned char>(dataIndex);
+                uint8_t valueType = data.get<uint8_t>(dataIndex);
                 dataIndex += sizeof(valueType);
-                CompareFlags cmp = static_cast<CompareFlags>(data.get<unsigned char>(dataIndex));
+                CompareFlags cmp = static_cast<CompareFlags>(data.get<uint8_t>(dataIndex));
             
                 std::string dirPath = "fs:/vol/external01/wiiu/Stardust";
             
@@ -290,56 +291,56 @@ namespace TCPServer
                 {
                     case VALUE_CHAR:
                     {
-                        MemoryList<char> src;
-                        int results;
-                        results = advanced::SearchMemory<char>(socket, dirPath, "Search", cmp);
+                        MemoryList<int8_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<int8_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
                     case VALUE_UCHAR:
                     {
-                        MemoryList<unsigned char> src;
-                        int results;
-                        results = advanced::SearchMemory<unsigned char>(socket, dirPath, "Search", cmp);
+                        MemoryList<uint8_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<uint8_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
                     case VALUE_SHORT:
                     {
-                        MemoryList<short> src;
-                        int results;
-                        results = advanced::SearchMemory<short>(socket, dirPath, "Search", cmp);
+                        MemoryList<int16_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<int16_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
                     case VALUE_USHORT:
                     {
-                        MemoryList<unsigned short> src;
-                        int results;
-                        results = advanced::SearchMemory<unsigned short>(socket, dirPath, "Search", cmp);
+                        MemoryList<uint16_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<uint16_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
                     case VALUE_INT:
                     {
-                        MemoryList<int> src;
-                        int results;
-                        results = advanced::SearchMemory<int>(socket, dirPath, "Search", cmp);
+                        MemoryList<int32_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<int32_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
                     case VALUE_UINT:
                     {
-                        MemoryList<unsigned int> src;
-                        int results;
-                        results = advanced::SearchMemory<unsigned int>(socket, dirPath, "Search", cmp);
+                        MemoryList<uint32_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<uint32_t>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
                     }
                     case VALUE_FLOAT:
                     {
                         MemoryList<float> src;
-                        int results;
+                        int32_t results;
                         results = advanced::SearchMemory<float>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
@@ -347,7 +348,7 @@ namespace TCPServer
                     case VALUE_DOUBLE:
                     {
                         MemoryList<double> src;
-                        int results;
+                        int32_t results;
                         results = advanced::SearchMemory<double>(socket, dirPath, "Search", cmp);
                         response.append(results);
                         break;
