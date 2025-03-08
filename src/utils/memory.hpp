@@ -11,7 +11,6 @@
 #include <notifications/notifications.h>
 
 // wut
-#include <coreinit/memorymap.h>
 #include <whb/log.h>
 
 // stardust

@@ -4,8 +4,9 @@
 #include <cstdio>
 
 // wut
-#include <kernel/kernel.h>
 #include <coreinit/cache.h>
+#include <coreinit/memorymap.h>
+#include <kernel/kernel.h>
 
 using namespace std;
 
@@ -94,9 +95,13 @@ namespace memory
             if(OSIsAddressValid(address))
             {
                 // アドレスを物理アドレスに変換
-                unsigned int physicalAddress = (unsigned int) OSEffectiveToPhysical(address);
+                uint32_t dist = OSEffectiveToPhysical(address);
+                uint32_t src = OSEffectiveToPhysical((uint32_t)&value);
             
-                KernelCopyData(physicalAddress, OSEffectiveToPhysical((unsigned int)&value), 4);
+                KernelCopyData(dist, src, 4);
+
+                WHBLogPrintf("Value %X has been written to address %X", value, address);
+
                 DCFlushRange((void *)address, 4);
                 ICInvalidateRange((void *)address, 4);
             }

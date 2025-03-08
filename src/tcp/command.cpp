@@ -15,11 +15,12 @@
 #include "../utils/math.hpp"
 #include "../utils/memory.hpp"
 
-const uint8_t COMMAND_READ        = 0x00; // バイト数制限付き
-const uint8_t COMMAND_WRITE       = 0x01; // バイト数制限付き
-const uint8_t COMMAND_SEARCH_SPEC = 0x02; // Todo
-const uint8_t COMMAND_SEARCH_DUMP = 0x03; // サーチ用のダンプ
-const uint8_t COMMAND_SEARCH_UNKN = 0x04; // ダンプからサーチ
+const uint8_t COMMAND_READ         = 0x00; // バイト数制限付き
+const uint8_t COMMAND_WRITE        = 0x01; // バイト数制限付き
+const uint8_t COMMAND_SEARCH_SPEC  = 0x02; // Todo
+const uint8_t COMMAND_SEARCH_DUMP  = 0x03; // サーチ用のダンプ
+const uint8_t COMMAND_SEARCH_UNKN  = 0x04; // ダンプからサーチ
+const uint8_t COMMAND_WRITE_KERNEL = 0x05; // カーネル書き込み
 
 const uint8_t VALUE_INT8   = 0x00;
 const uint8_t VALUE_UINT8  = 0x01;
@@ -382,6 +383,54 @@ namespace TCPServer
                         break;
                     }
                 }
+                break;
+            }
+            case COMMAND_WRITE_KERNEL:
+            {
+                // 開始アドレス + 書き込む値 (例:0E000000 600000004E800020 -> 0x0E000000に[nop, blr]が書き込まれる)
+
+                if(dataLength < HEADER_SIZE + sizeof(uint32_t) + sizeof(uint32_t)) // コマンドの長さが足りなければ中止
+                {
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    RepsonseFailed(socket);
+                    break;
+                }
+            
+                uint32_t startAddress = data.get<uint32_t>(dataIndex); // 書き込むメモリアドレスを取得
+                dataIndex += sizeof(startAddress);
+                Bytes values; // 書き込む値のバッファ
+                values.assign(data.begin() + dataIndex, data.end());  // 書き込む値を取得
+                uint32_t writeSize = values.size(); // 書き込むデータの長さ
+            
+                if(writeSize > FREE_MEMORY_SIZE) // 書き込むデータが長過ぎれば中止
+                {
+                    WHBLogPrintf("%s is Failed: Data is too long", commandStr.c_str()); // データが長すぎます
+                    RepsonseFailed(socket);
+                    break;
+                }
+            
+                response.append(RESPONSE_SUCCESS);
+            
+                for(uint32_t i = 0; i < writeSize; i += 4) // すべてのデータを書き込むまでループ
+                {
+                    uint32_t address = startAddress + i; // 現在のアドレス
+                    if(OSIsAddressValid(address)) // アドレスが有効
+                    {
+                        uint32_t value = values.get<uint32_t>(i); // 書き込む値
+                        base::WriteKernel(address, value); // アドレスに値を書き込む
+                    }
+                    else // 不正なアドレス
+                    {
+                        WHBLogPrintf("%s is Failed: Address is invalid", commandStr.c_str()); // アドレスが無効です
+                        RepsonseFailed(socket);
+                        break;
+                    }
+                }
+                break;
+            }
+            case 6:
+            {
+                base::WriteKernel(0x0E000000, 0x4E800020);
                 break;
             }
             default:

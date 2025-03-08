@@ -16,8 +16,6 @@ WUT_ROOT := $(DEVKITPRO)/wut
 WUPS_ROOT := $(DEVKITPRO)/wups
 WUMS_ROOT := $(DEVKITPRO)/wums
 
-USR_ROOT := $(WUT_ROOT)/usr
-
 #-------------------------------------------------------------------------------
 # Library include path
 #-------------------------------------------------------------------------------
@@ -51,13 +49,13 @@ CXXFLAGS	:= $(CFLAGS) -std=c++20
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS)
 
-LIBS	:= -lwups -lwut -lnotifications
+LIBS	:= -lwups -lwut -lnotifications -lkernel
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT) $(USR_ROOT)
+LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT)
 
 #-------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
