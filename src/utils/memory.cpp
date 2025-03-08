@@ -100,8 +100,6 @@ namespace memory
             
                 KernelCopyData(dist, src, 4);
 
-                WHBLogPrintf("Value %X has been written to address %X", value, address);
-
                 DCFlushRange((void *)address, 4);
                 ICInvalidateRange((void *)address, 4);
             }

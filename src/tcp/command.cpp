@@ -428,11 +428,6 @@ namespace TCPServer
                 }
                 break;
             }
-            case 6:
-            {
-                base::WriteKernel(0x0E000000, 0x4E800020);
-                break;
-            }
             default:
             {
                 break;
