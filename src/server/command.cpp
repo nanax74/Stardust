@@ -10,7 +10,7 @@
 #include <whb/log.h>
 
 // stardust
-#include "data.hpp"
+#include "../transfer/packet.hpp"
 #include "../utils/compare.hpp"
 #include "../utils/math.hpp"
 #include "../utils/memory.hpp"
@@ -35,7 +35,6 @@ const uint8_t VALUE_DOUBLE = 0x09;
 
 using namespace std;
 using namespace memory;
-using namespace data;
 
 // コマンドの種類
 map<uint8_t, string> commandMap =
@@ -43,8 +42,9 @@ map<uint8_t, string> commandMap =
     {COMMAND_READ, "Read"},
     {COMMAND_WRITE, "Write"},
     {COMMAND_SEARCH_SPEC, "Specific Search"},
-    {COMMAND_SEARCH_DUMP, "Dump"},
-    {COMMAND_SEARCH_UNKN, "Unknown Search"}
+    {COMMAND_SEARCH_DUMP, "Dump for Search"},
+    {COMMAND_SEARCH_UNKN, "Unknown Search"},
+    {COMMAND_WRITE_KERNEL, "Kernel Write"}
 };
 
 // コマンドの種類を文字列で取得
@@ -62,9 +62,10 @@ namespace TCPServer
 {
     void RepsonseFailed(int32_t socket)
     {
-        Bytes response;
-        response.append(RESPONSE_FAILED); // 失敗応答
-        SendPacket(socket, response, DATA_TYPE_RESPONSE);
+        Packet packet;
+        packet.Data.append(RESPONSE_FAILED); // 失敗応答
+        packet.Type = DATA_TYPE_DATA;
+        packet.SendPacket(socket);
     }
 
     // コマンドを処理
@@ -433,7 +434,10 @@ namespace TCPServer
                 break;
             }
         }
-        SendPacket(socket, response, DATA_TYPE_RESPONSE);
+        Packet packet;
+        packet.Data = response; // 応答
+        packet.Type = DATA_TYPE_DATA;
+        packet.SendPacket(socket);
         auto endTime = chrono::high_resolution_clock::now(); // 計測終了
         auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count(); // 経過時間を算出
         WHBLogPrintf("Processing complete: %lld ms", duration); // かかった時間を表示

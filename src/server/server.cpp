@@ -14,11 +14,10 @@
 
 // stardust
 #include "command.hpp"
-#include "data.hpp"
+#include "../transfer/packet.hpp"
 #include "../utils/bytes.hpp"
 
 using namespace std;
-using namespace data;
 
 namespace TCPServer
 {
@@ -168,18 +167,17 @@ namespace TCPServer
         int32_t result; // 関数の返り値を格納する変数
 
         // データを受け取るためのバッファ
-        Bytes data;
-        uint32_t type;
-
-        result = ReceivePacket(clientSocket, data, type); // データを受け取る
+        Packet packet;
+        result = packet.ReceivePacket(clientSocket); // データを受け取る
+        WHBLogPrintf("Type:%d", packet.Type);
         if(result == 0)
         {
             DisconnectClient();
         }
 
-        if(type == DATA_TYPE_COMMAND)
+        if(packet.Type == DATA_TYPE_DATA)
         {
-            ProcessCommand(clientSocket, data); // コマンドを処理
+            ProcessCommand(clientSocket, packet.Data); // コマンドを処理
         }
     }
 }

@@ -5,75 +5,81 @@
 
 class Bytes
 {
-    private:
-        std::vector<uint8_t> _data;
+private:
+    std::vector<uint8_t> _data;
 
-    public:
-        // 要素へのアクセス
-        uint8_t& operator[](size_t index)
+public:
+    Bytes(size_t size = 0)
+    {
+        _data = std::vector<uint8_t>(size);
+    }
+
+public:
+    // 要素へのアクセス
+    uint8_t& operator[](size_t index)
+    {
+        return _data[index];
+    }
+
+    void append(int8_t value);
+    void append(uint8_t value);
+    void append(int16_t value);
+    void append(uint16_t value);
+    void append(int32_t value);
+    void append(uint32_t value);
+    void append(int64_t value);
+    void append(uint64_t value);
+    void append(float value);
+    void append(double value);
+
+    // 特定のオフセット値を取得
+    template <typename T>
+    T get(size_t offset)
+    {
+        if(offset + sizeof(T) > _data.size()) return 0;
+    
+        T result = 0;
+        for(size_t i = 0; i < sizeof(T); ++i)
         {
-            return _data[index];
+            result |= (static_cast<T>(_data.at(offset + i)) << (8 * (sizeof(T) - 1 - i)));  // ビッグエンディアン形式で変換
         }
+    
+        return result;
+    }
 
-        void append(int8_t value);
-        void append(uint8_t value);
-        void append(int16_t value);
-        void append(uint16_t value);
-        void append(int32_t value);
-        void append(uint32_t value);
-        void append(int64_t value);
-        void append(uint64_t value);
-        void append(float value);
-        void append(double value);
+    size_t size() const
+    {
+        return _data.size();
+    }
 
-        // 特定のオフセット値を取得
-        template <typename T>
-        T get(size_t offset)
-        {
-            if(offset + sizeof(T) > _data.size()) return 0;
-        
-            T result = 0;
-            for(size_t i = 0; i < sizeof(T); ++i)
-            {
-                result |= (static_cast<T>(_data.at(offset + i)) << (8 * (sizeof(T) - 1 - i)));  // ビッグエンディアン形式で変換
-            }
-        
-            return result;
-        }
+    bool empty() const
+    {
+        return _data.empty();
+    }
 
-        size_t size() const
-        {
-            return _data.size();
-        }
+    // 範囲指定
+    void assign(auto first, auto last)
+    {
+        _data.assign(first, last);
+    }
 
-        bool empty() const
-        {
-            return _data.empty();
-        }
+    auto begin()
+    {
+        return _data.begin();
+    }
 
-        // 範囲指定
-        void assign(auto first, auto last)
-        {
-            _data.assign(first, last);
-        }
+    auto end()
+    {
+        return _data.end();
+    }
 
-        auto begin()
-        {
-            return _data.begin();
-        }
+    void resize(size_t size)
+    {
+        _data.resize(size);
+    }
 
-        auto end()
-        {
-            return _data.end();
-        }
-
-        void resize(size_t size)
-        {
-            _data.resize(size);
-        }
-
-        uint8_t* data()
-        {
-            return _data.data();
-        }
+    uint8_t* data()
+    {
+        return _data.data();
+    }
 };

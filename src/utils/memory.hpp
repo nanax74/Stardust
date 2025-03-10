@@ -14,7 +14,7 @@
 #include <whb/log.h>
 
 // stardust
-#include "../tcp/data.hpp"
+#include "../transfer/packet.hpp"
 #include "compare.hpp"
 
 namespace memory

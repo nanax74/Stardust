@@ -31,7 +31,8 @@ LIB_INC := $(PORTLIBS)/include
 TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
-				src/tcp \
+				src/server \
+				src/transfer \
 				src/utils
 DATA		:=	data
 INCLUDES	:=	include
@@ -44,7 +45,7 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ -D__WUPS__
 
-CXXFLAGS	:= $(CFLAGS) -std=c++20
+CXXFLAGS	:= $(CFLAGS) -std=c++23
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libkernel.ld $(WUPSSPECS)

@@ -306,7 +306,10 @@ namespace memory
                 NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
                 Bytes progress;
                 progress.append(totalDump);
-                data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
+                Packet packet;
+                packet.Data = progress;
+                packet.Type = DATA_TYPE_PROGRESS;
+                packet.SendPacket(socket);
 
                 uint32_t chunkSize = std::min(FREE_MEMORY_SIZE, remaining);
 
@@ -359,7 +362,10 @@ namespace memory
                 NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
                 Bytes progress;
                 progress.append(totalSearch);
-                data::SendPacket(socket, progress, DATA_TYPE_PROGRESS);
+                Packet packet;
+                packet.Data = progress;
+                packet.Type = DATA_TYPE_PROGRESS;
+                packet.SendPacket(socket);
         
                 MemoryList<T> src;
                 WHBLogPrintf(std::format("Loading:{} Offset:{:X}", filePath, totalSearch).c_str());

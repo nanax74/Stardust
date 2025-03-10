@@ -11,7 +11,7 @@
 #include <whb/log_udp.h>
 
 // stardust
-#include "tcp/server.hpp"
+#include "server/server.hpp"
 
 WUPS_PLUGIN_NAME("Stardust");
 WUPS_PLUGIN_DESCRIPTION("TCPServer");
