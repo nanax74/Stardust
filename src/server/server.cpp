@@ -169,7 +169,6 @@ namespace TCPServer
         // データを受け取るためのバッファ
         Packet packet;
         result = packet.ReceivePacket(clientSocket); // データを受け取る
-        WHBLogPrintf("Type:%d", packet.Type);
         if(result == 0)
         {
             DisconnectClient();
