@@ -175,7 +175,7 @@ namespace TCPServer
             DisconnectClient();
         }
 
-        if(packet.Type == DATA_TYPE_DATA)
+        if(packet.Type == Packet::DATA_TYPE_DATA)
         {
             ProcessCommand(clientSocket, packet.Data); // コマンドを処理
         }

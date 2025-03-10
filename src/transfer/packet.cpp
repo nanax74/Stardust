@@ -43,8 +43,8 @@ int32_t Packet::SendPacket(int32_t socket)
     }
 
     Bytes header = Bytes();
-    header.append(Value::Reverse(size));
-    header.append(Value::Reverse(Type));
+    header.append(size);
+    header.append(Type);
     int32_t result = Transfer::SendAll(socket, header); // ヘッダを送信
     if(result <= 0) return result; // 送信失敗
     return Transfer::SendAll(socket, Data); // データを送信

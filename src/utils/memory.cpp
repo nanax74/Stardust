@@ -308,7 +308,7 @@ namespace memory
                 progress.append(totalDump);
                 Packet packet;
                 packet.Data = progress;
-                packet.Type = DATA_TYPE_PROGRESS;
+                packet.Type = Packet::DATA_TYPE_PROGRESS;
                 packet.SendPacket(socket);
 
                 uint32_t chunkSize = std::min(FREE_MEMORY_SIZE, remaining);
@@ -364,7 +364,7 @@ namespace memory
                 progress.append(totalSearch);
                 Packet packet;
                 packet.Data = progress;
-                packet.Type = DATA_TYPE_PROGRESS;
+                packet.Type = Packet::DATA_TYPE_PROGRESS;
                 packet.SendPacket(socket);
         
                 MemoryList<T> src;

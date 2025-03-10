@@ -64,7 +64,7 @@ namespace TCPServer
     {
         Packet packet;
         packet.Data.append(RESPONSE_FAILED); // 失敗応答
-        packet.Type = DATA_TYPE_DATA;
+        packet.Type = Packet::DATA_TYPE_DATA;
         packet.SendPacket(socket);
     }
 
@@ -436,7 +436,7 @@ namespace TCPServer
         }
         Packet packet;
         packet.Data = response; // 応答
-        packet.Type = DATA_TYPE_DATA;
+        packet.Type = Packet::DATA_TYPE_DATA;
         packet.SendPacket(socket);
         auto endTime = chrono::high_resolution_clock::now(); // 計測終了
         auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count(); // 経過時間を算出
