@@ -32,8 +32,10 @@ namespace TCPServer
     // 初期化
     void Init()
     {
-        Start();
-        tcpServer = jthread(Thread);
+        if(Start() != -1)
+        {
+            tcpServer = jthread(Thread);
+        }
     }
 
     // 初期化解除
@@ -57,16 +59,17 @@ namespace TCPServer
         WHBLogPrintf("Initializing network functions");
         nn::ac::Initialize();
         nn::ac::Connect();
-        if(nn::ac::GetAssignedAddress(&hostIpAddress) != 0)
+        int result = nn::ac::GetAssignedAddress(&hostIpAddress);
+        if(result != 1)
         {
-            WHBLogPrintf("Failed to get IP address");
+            WHBLogPrintf("Failed to get IP address:%d", result);
             return;
         }
-        WHBLogPrintf("Network functions initialized");
+        WHBLogPrintf("Succeeded to get IP address");
     }
 
     // 開始
-    void Start()
+    int Start()
     {
         WHBLogPrintf("Starting TCP server");
         InitSocketFunctionPointers();
@@ -75,9 +78,18 @@ namespace TCPServer
         if(serverSocket < 0)
         {
             WHBLogPrintf("Failed to create socket\n");
-            return;
+            return -1;
         }
         WHBLogPrintf("Socket created");
+
+        // ソケットを再利用できるように設定
+        int opt = 1;
+        if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+        {
+            WHBLogPrintf("setsockopt failed");
+            close(serverSocket);
+            return 1;
+        }
 
         // IPアドレスやポート番号を設定
         sockaddr_in serverAddr;
@@ -88,21 +100,24 @@ namespace TCPServer
 
         if(bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
         {
+            close(serverSocket);
+            serverSocket = -1;
             WHBLogPrintf("Failed to bind socket\n");
-            return;
+            return -1;
         }
         WHBLogPrintf("Socket bound");
 
         if(listen(serverSocket, 1) < 0)
         {
             WHBLogPrintf("Failed to listen on socket\n");
-            return;
+            return -1;
         }
         WHBLogPrintf("Listening on socket");
 
         char ipStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &hostIpAddress, ipStr, INET_ADDRSTRLEN);
         WHBLogPrintf("Server started on IP: %s, port: %d\n", ipStr, TCP_PORT);
+        return 0;
     }
 
     // 更新
@@ -123,6 +138,7 @@ namespace TCPServer
             shutdown(clientSocket, 0);
             close(clientSocket);
             clientSocket = -1; // クライアントソケットをリセット
+            WHBLogPrintf("Client reset");
         }
 
         if(serverSocket != -1)
@@ -131,12 +147,14 @@ namespace TCPServer
             shutdown(serverSocket, 0);
             close(serverSocket);
             serverSocket = -1;  // サーバーソケットをリセット
+            WHBLogPrintf("Server reset");
         }
 
         if (tcpServer.joinable())
         {
             tcpServer.request_stop();
             tcpServer.join();
+            WHBLogPrintf("Server thread ended");
         }
 
         WHBLogPrintf("Server ended");
@@ -145,11 +163,16 @@ namespace TCPServer
     // クライアントの接続待機
     void AcceptClient()
     {
-        if(clientSocket == -1)
+        if(serverSocket != -1 && clientSocket == -1)
         {
             WHBLogPrintf("Waiting to accept client");
             clientSocket = accept(serverSocket, NULL, NULL);
-            WHBLogPrintf("Client connected:%X", clientSocket);
+            if(clientSocket < 0)
+            {
+                WHBLogPrintf("Failed to accept client");
+                return;
+            }
+            WHBLogPrintf("Client connected:%X Server:%X", clientSocket, serverSocket);
         }
     }
 
@@ -164,19 +187,22 @@ namespace TCPServer
 
     void ReceiveFromClient()
     {
-        int32_t result; // 関数の返り値を格納する変数
-
-        // データを受け取るためのバッファ
-        Packet packet;
-        result = packet.ReceivePacket(clientSocket); // データを受け取る
-        if(result == 0)
+        if(serverSocket != -1 && clientSocket != -1)
         {
-            DisconnectClient();
-        }
+            int32_t result; // 関数の返り値を格納する変数
 
-        if(packet.Type == Packet::DATA_TYPE_DATA)
-        {
-            ProcessCommand(clientSocket, packet.Data); // コマンドを処理
+            // データを受け取るためのバッファ
+            Packet packet;
+            result = packet.ReceivePacket(clientSocket); // データを受け取る
+            if(result == 0)
+            {
+                DisconnectClient();
+            }
+
+            if(packet.Type == Packet::DATA_TYPE_DATA)
+            {
+                ProcessCommand(clientSocket, packet.Data); // コマンドを処理
+            }
         }
     }
 }
