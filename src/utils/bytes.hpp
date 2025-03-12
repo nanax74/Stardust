@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 #include <vector>
 
 class Bytes
@@ -34,18 +35,7 @@ public:
 
     // 特定のオフセット値を取得
     template <typename T>
-    T get(size_t offset)
-    {
-        if(offset + sizeof(T) > _data.size()) return 0;
-    
-        T result = 0;
-        for(size_t i = 0; i < sizeof(T); ++i)
-        {
-            result |= (static_cast<T>(_data.at(offset + i)) << (8 * (sizeof(T) - 1 - i)));  // ビッグエンディアン形式で変換
-        }
-    
-        return result;
-    }
+    T get(size_t index);
 
     size_t size() const
     {

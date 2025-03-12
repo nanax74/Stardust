@@ -17,8 +17,8 @@
 
 const uint8_t COMMAND_READ         = 0x00; // バイト数制限付き
 const uint8_t COMMAND_WRITE        = 0x01; // バイト数制限付き
-const uint8_t COMMAND_SEARCH_SPEC  = 0x02; // Todo
-const uint8_t COMMAND_SEARCH_DUMP  = 0x03; // サーチ用のダンプ
+const uint8_t COMMAND_SEARCH_DUMP  = 0x02; // サーチ用のダンプ
+const uint8_t COMMAND_SEARCH_SPEC  = 0x03; // ダンプからサーチ
 const uint8_t COMMAND_SEARCH_UNKN  = 0x04; // ダンプからサーチ
 const uint8_t COMMAND_WRITE_KERNEL = 0x05; // カーネル書き込み
 
@@ -183,38 +183,6 @@ namespace TCPServer
                 }
                 break;
             }
-            case COMMAND_SEARCH_SPEC:
-            {
-                /*
-                // 開始アドレス + サーチする長さ + サーチする値 (例:10000000 00001000 3F800000 -> 10000000から1000byteの範囲で値が3F800000のアドレスが検索される)
-                if(dataSize < DATA_HEDDER + (int32_t)sizeof(uint32_t) * 3) break;
-
-                uint32_t startAddress = data.Get<uint32_t>(DATA_HEDDER);  // 書き込むメモリアドレスを取得
-                uint32_t searchSize = data.Get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress));
-                uint32_t searchValue = data.Get<uint32_t>(DATA_HEDDER + (int32_t)sizeof(startAddress) + (int32_t)sizeof(searchSize));
-
-                Bytes response;
-            
-                for(uint32_t i = 0; i < searchSize / sizeof(uint32_t); i++)
-                {
-                    uint32_t address = startAddress + i * sizeof(uint32_t);
-                    if(OSIsAddressValid(address))
-                    {
-                        uint32_t value = ReadMemory<uint32_t>(address);
-                        if(value == searchValue)
-                        {
-                            response.Append(address);
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                SendData(socket, response);
-                */
-                break;
-            }
             case COMMAND_SEARCH_DUMP:
             {
                 // 開始アドレス + ダンプする長さ + 値の型 (例:10000000 00001000 05 -> 0x10000000からunsigned intで0x1000byte読み取りダンプする)
@@ -290,9 +258,129 @@ namespace TCPServer
                 }
                 break;
             }
+            case COMMAND_SEARCH_SPEC:
+            {
+                // 値の種類 + 比較演算子 + サーチする値 (例:08 01 3F800000 -> 前回のサーチ結果と3F800000をfloatで比較し、一致するアドレスを検索)
+
+                if(dataLength < HEADER_SIZE + sizeof(uint8_t) * 2 + sizeof(uint32_t)) // コマンドの長さが足りなければ中止
+                {
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    RepsonseFailed(socket);
+                    break;
+                }
+
+                uint8_t valueType = data.get<uint8_t>(dataIndex);
+                dataIndex += sizeof(valueType);
+                CompareFlags cmp = static_cast<CompareFlags>(data.get<uint8_t>(dataIndex));
+                dataIndex += sizeof(cmp);
+
+                std::string dirPath = "fs:/vol/external01/wiiu/Stardust";
+            
+                switch (valueType)
+                {
+                    case VALUE_INT8:
+                    {
+                        int8_t value = data.get<int8_t>(dataIndex);
+                        MemoryList<int8_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<int8_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_UINT8:
+                    {
+                        uint8_t value = data.get<uint8_t>(dataIndex);
+                        MemoryList<uint8_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<uint8_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_INT16:
+                    {
+                        int16_t value = data.get<int16_t>(dataIndex);
+                        MemoryList<int16_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<int16_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_UINT16:
+                    {
+                        uint16_t value = data.get<uint16_t>(dataIndex);
+                        MemoryList<uint16_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<uint16_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_INT32:
+                    {
+                        int32_t value = data.get<int32_t>(dataIndex);
+                        MemoryList<int32_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<int32_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_UINT32:
+                    {
+                        uint32_t value = data.get<uint32_t>(dataIndex);
+                        MemoryList<uint32_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<uint32_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_INT64:
+                    {
+                        int64_t value = data.get<int64_t>(dataIndex);
+                        MemoryList<int64_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<int64_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_UINT64:
+                    {
+                        uint64_t value = data.get<uint64_t>(dataIndex);
+                        MemoryList<uint64_t> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<uint64_t>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_FLOAT:
+                    {
+                        float value = data.get<float>(dataIndex);
+                        MemoryList<float> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<float>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                    case VALUE_DOUBLE:
+                    {
+                        double value = data.get<double>(dataIndex);
+                        MemoryList<double> src;
+                        int32_t results;
+                        results = advanced::SearchMemory<double>(socket, dirPath, "Search", cmp, value);
+                        response.append(results);
+                        break;
+                    }
+                }
+                break;
+            }
             case COMMAND_SEARCH_UNKN:
             {
-                // 開始アドレス(例:05 04 -> 前回のサーチ結果のサイズ分のメモリアドレスをunsigned intでサーチ)
+                // 値の種類 + 比較演算子 (例:05 04 -> 前回のサーチ結果と現在のメモリをunsigned intで比較し、値が大きくなっているアドレスを検索)
+
+                if(dataLength < HEADER_SIZE + sizeof(uint8_t) * 2) // コマンドの長さが足りなければ中止
+                {
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    RepsonseFailed(socket);
+                    break;
+                }
 
                 // コマンドから情報を取得
                 uint8_t valueType = data.get<uint8_t>(dataIndex);

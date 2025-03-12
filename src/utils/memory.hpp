@@ -70,7 +70,11 @@ namespace memory
         template <typename T>
         size_t LoadMemoryList(const std::string& srcPath, MemoryList<T>& dist, uint32_t offset);
 
-        // srcと現在のメモリをopで比較し、結果をdistに追加
+        // Specificサーチ
+        template <typename T>
+        int32_t SearchMemoryList(MemoryList<T>& src, MemoryList<T>& dist, CompareFlags op, T value);
+
+        // Unknownサーチ
         template <typename T>
         int32_t SearchMemoryList(MemoryList<T>& src, MemoryList<T>& dist, CompareFlags op);
 
@@ -86,5 +90,8 @@ namespace memory
 
         template <typename T>
         int32_t SearchMemory(int32_t socket, std::string& dirPath, std::string fileName, CompareFlags cmp);
+
+        template <typename T>
+        int32_t SearchMemory(int32_t socket, std::string& dirPath, std::string fileName, CompareFlags cmp, T value);
     }
 }

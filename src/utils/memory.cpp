@@ -230,6 +230,39 @@ namespace memory
         template size_t LoadMemoryList<float>(const string&, MemoryList<float>&, uint32_t);
         template size_t LoadMemoryList<double>(const string&, MemoryList<double>&, uint32_t);
 
+        // Specificサーチ
+        template <typename T>
+        int32_t SearchMemoryList(MemoryList<T>& src, MemoryList<T>& dist, CompareFlags op, T value)
+        {
+            int32_t count = 0;
+            if(src.size() > 0)
+            {
+                for(MemoryEntry<T> item : src)
+                {
+                    T newValue = ReadMemory<T>(item.address);
+                    CompareFlags cmp = Compare<T>(newValue, value);
+                    if((cmp & op) == op)
+                    {
+                        dist.push_back({item.address, newValue});
+                        ++count;
+                    }
+                }
+            }
+            return count;
+        }
+    
+        template int32_t SearchMemoryList<int8_t>(MemoryList<int8_t>&, MemoryList<int8_t>&, CompareFlags, int8_t);
+        template int32_t SearchMemoryList<uint8_t>(MemoryList<uint8_t>&, MemoryList<uint8_t>&, CompareFlags, uint8_t);
+        template int32_t SearchMemoryList<int16_t>(MemoryList<int16_t>&, MemoryList<int16_t>&, CompareFlags, int16_t);
+        template int32_t SearchMemoryList<uint16_t>(MemoryList<uint16_t>&, MemoryList<uint16_t>&, CompareFlags, uint16_t);
+        template int32_t SearchMemoryList<int32_t>(MemoryList<int32_t>&, MemoryList<int32_t>&, CompareFlags, int32_t);
+        template int32_t SearchMemoryList<uint32_t>(MemoryList<uint32_t>&, MemoryList<uint32_t>&, CompareFlags, uint32_t);
+        template int32_t SearchMemoryList<int64_t>(MemoryList<int64_t>&, MemoryList<int64_t>&, CompareFlags, int64_t);
+        template int32_t SearchMemoryList<uint64_t>(MemoryList<uint64_t>&, MemoryList<uint64_t>&, CompareFlags, uint64_t);
+        template int32_t SearchMemoryList<float>(MemoryList<float>&, MemoryList<float>&, CompareFlags, float);
+        template int32_t SearchMemoryList<double>(MemoryList<double>&, MemoryList<double>&, CompareFlags, double);
+
+        // Unknownサーチ
         template <typename T>
         int32_t SearchMemoryList(MemoryList<T>& src, MemoryList<T>& dist, CompareFlags op)
         {
@@ -342,6 +375,80 @@ namespace memory
         template void DumpMemory<float>(int32_t, string&, string, uint32_t, uint32_t);
         template void DumpMemory<double>(int32_t, string&, string, uint32_t, uint32_t);
 
+        // Specificサーチ
+        template <typename T>
+        int32_t SearchMemory(int32_t socket, std::string& dirPath, std::string fileName, CompareFlags cmp, T value)
+        {
+            NotificationModuleHandle handleSub;
+            NotificationModule_AddDynamicNotification("Starting Search...", &handleSub);
+        
+            NotificationModuleHandle handleMain;
+            NotificationModule_AddDynamicNotification("Searching...", &handleMain);
+        
+            std::string filePath = std::format("{}/{}.bin", dirPath, fileName);
+            std::string tempPath = std::format("{}/temp.bin", dirPath);
+        
+            int32_t results = 0;
+        
+            uint32_t totalSearch = 0;
+            while (true)
+            {
+                NotificationModule_UpdateDynamicNotificationText(handleSub, "Sending progress...");
+                Bytes progress;
+                progress.append(totalSearch);
+                Packet packet;
+                packet.Data = progress;
+                packet.Type = Packet::DATA_TYPE_PROGRESS;
+                packet.SendPacket(socket);
+        
+                MemoryList<T> src;
+                WHBLogPrintf(std::format("Loading:{} Offset:{:X}", filePath, totalSearch).c_str());
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Loading:{} Offset:{:X}", filePath, totalSearch).c_str());
+                uint32_t loaded = base::LoadMemoryList<T>(filePath, src, totalSearch);
+                if(loaded == 0)
+                {
+                    WHBLogPrintf(std::format("Failed to load memory list from file:{}", filePath).c_str());
+                    break;
+                }
+        
+                MemoryList<T> dist;
+                WHBLogPrintf(std::format("Searching:{}bytes", src.size()).c_str());
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Searching:{}bytes", src.size()).c_str());
+                results += base::SearchMemoryList<T>(src, dist, cmp, value);
+        
+                WHBLogPrintf(std::format("Saving:{} {}bytes", tempPath, dist.size()).c_str());
+                NotificationModule_UpdateDynamicNotificationText(handleSub, std::format("Saving:{} {}bytes", tempPath, dist.size()).c_str());
+                if(!base::SaveMemoryList<T>(tempPath, dist))
+                {
+                    WHBLogPrintf(std::format("Failed to save memory list to file:{}", filePath).c_str());
+                    break;
+                }
+                totalSearch += loaded;
+        
+                // デバッグ用ログを追加
+                WHBLogPrintf("Total search progress: %u", totalSearch);
+                WHBLogPrintf("Current results count: %d", results);
+            }
+            WHBLogPrintf("Broke");
+            base::RemoveFile(filePath);
+            base::RenameFile(tempPath, filePath);
+            NotificationModule_FinishDynamicNotification(handleSub, 0.1f);
+            NotificationModule_FinishDynamicNotification(handleMain, 0.1f);
+            return results;
+        }
+
+        template int32_t SearchMemory<int8_t>(int32_t, string&, string, CompareFlags, int8_t);
+        template int32_t SearchMemory<uint8_t>(int32_t, string&, string, CompareFlags, uint8_t);
+        template int32_t SearchMemory<int16_t>(int32_t, string&, string, CompareFlags, int16_t);
+        template int32_t SearchMemory<uint16_t>(int32_t, string&, string, CompareFlags, uint16_t);
+        template int32_t SearchMemory<int32_t>(int32_t, string&, string, CompareFlags, int32_t);
+        template int32_t SearchMemory<uint32_t>(int32_t, string&, string, CompareFlags, uint32_t);
+        template int32_t SearchMemory<int64_t>(int32_t, string&, string, CompareFlags, int64_t);
+        template int32_t SearchMemory<uint64_t>(int32_t, string&, string, CompareFlags, uint64_t);
+        template int32_t SearchMemory<float>(int32_t, string&, string, CompareFlags, float);
+        template int32_t SearchMemory<double>(int32_t, string&, string, CompareFlags, double);
+
+        // Unknownサーチ
         template <typename T>
         int32_t SearchMemory(int32_t socket, std::string& dirPath, std::string fileName, CompareFlags cmp)
         {
