@@ -12,9 +12,9 @@ private:
     const uint32_t MAX_PACKET_SIZE = 1024 * 1024; // パケットの最大サイズ
 
 public:
-    static const uint8_t DATA_TYPE_NULL = 0x00;
-    static const uint8_t DATA_TYPE_DATA  = 0x01;
-    static const uint8_t DATA_TYPE_PROGRESS = 0x02;
+    static const uint8_t DATA_TYPE_DATA  = 0x00; // コマンドや応答
+    static const uint8_t DATA_TYPE_PROGRESS = 0x01; // 進捗
+    static const uint8_t DATA_TYPE_NULL = 0xFF; // 空のデータ
 
 public:
     Bytes Data;

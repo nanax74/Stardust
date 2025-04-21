@@ -16,4 +16,7 @@ const uint8_t RESPONSE_FAILED  = 0xFF; // 失敗応答
 namespace TCPServer
 {
     void ProcessCommand(int32_t socket, Bytes& data);
+
+    void SendSuccess(int socket, auto startTime, Bytes response);
+    void SendFailed(int socket, auto startTime);
 }
