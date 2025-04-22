@@ -60,14 +60,6 @@ string GetCommandTypeStr(uint8_t command)
 
 namespace TCPServer
 {
-    void RepsonseFailed(int32_t socket)
-    {
-        Packet packet;
-        packet.Data.append(RESPONSE_ERROR); // 失敗応答
-        packet.Type = Packet::DATA_TYPE_DATA;
-        packet.SendPacket(socket);
-    }
-
     // コマンドを処理
     void ProcessCommand(int32_t socket, Bytes& data)
     {
@@ -77,7 +69,8 @@ namespace TCPServer
         uint32_t dataLength = data.size();
         if(dataLength == 0)  // コマンドのサイズが0なら中止
         {
-            SendError(socket, startTime);
+            SendError(socket, startTime, ERROR_COMMAND_INVALID); // コマンドが無効です
+            WHBLogPrintf("Command is empty"); // コマンドが空です
             return;
         };
         uint8_t command = data[0];  // コマンドの種類
@@ -104,7 +97,7 @@ namespace TCPServer
                 if(dataLength < sizeof(uint32_t) * 2) // コマンドの長さが足りなければ中止
                 {
                     WHBLogPrintf("%s failed: Command is too short", commandStr.c_str());
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_COMMAND_INVALID);
                     return;
                 }
 
@@ -115,7 +108,7 @@ namespace TCPServer
                 if(readSize > FREE_MEMORY_SIZE) // 読み取るデータが長過ぎれば中止
                 {
                     WHBLogPrintf("%s failed: Data is too long", commandStr.c_str()); // データが長すぎます
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_DATA_TOO_LONG);
                     return;
                 }
 
@@ -130,7 +123,7 @@ namespace TCPServer
                     else // 不正なアドレス
                     {
                         WHBLogPrintf("%s failed: Address is invalid", commandStr.c_str()); // アドレスが無効です
-                        SendError(socket, startTime);
+                        SendError(socket, startTime, ERROR_ADDRESS_INVALID);
                         return;
                     }
                 }
@@ -144,7 +137,7 @@ namespace TCPServer
                 if(dataLength < HEADER_SIZE + sizeof(uint32_t) + sizeof(uint8_t)) // コマンドの長さが足りなければ中止
                 {
                     WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_COMMAND_INVALID);
                     return;
                 }
 
@@ -157,7 +150,7 @@ namespace TCPServer
                 if(writeSize > FREE_MEMORY_SIZE) // 書き込むデータが長過ぎれば中止
                 {
                     WHBLogPrintf("%s is Failed: Data is too long", commandStr.c_str()); // データが長すぎます
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_DATA_TOO_LONG);
                     return;
                 }
 
@@ -174,7 +167,7 @@ namespace TCPServer
                     else // 不正なアドレス
                     {
                         WHBLogPrintf("%s is Failed: Address is invalid", commandStr.c_str()); // アドレスが無効です
-                        SendError(socket, startTime);
+                        SendError(socket, startTime, ERROR_ADDRESS_INVALID);
                         return;
                     }
                 }
@@ -249,7 +242,8 @@ namespace TCPServer
                     }
                     default:
                     {
-                        SendError(socket, startTime);
+                        SendError(socket, startTime, ERROR_VALUE_TYPE_INVALID); // 無効な値の型
+                        WHBLogPrintf("%s is Failed: Invalid value type", commandStr.c_str()); // 無効な値の型です
                         return;
                     }
                 }
@@ -262,7 +256,7 @@ namespace TCPServer
                 if(dataLength < HEADER_SIZE + sizeof(uint8_t) * 2 + sizeof(uint32_t)) // コマンドの長さが足りなければ中止
                 {
                     WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_COMMAND_INVALID);
                     return;
                 }
 
@@ -375,7 +369,7 @@ namespace TCPServer
                 if(dataLength < HEADER_SIZE + sizeof(uint8_t) * 2) // コマンドの長さが足りなければ中止
                 {
                     WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_COMMAND_INVALID);
                     return;
                 }
 
@@ -478,7 +472,7 @@ namespace TCPServer
                 if(dataLength < HEADER_SIZE + sizeof(uint32_t) + sizeof(uint32_t)) // コマンドの長さが足りなければ中止
                 {
                     WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_COMMAND_INVALID);
                     return;
                 }
             
@@ -491,7 +485,7 @@ namespace TCPServer
                 if(writeSize > FREE_MEMORY_SIZE) // 書き込むデータが長過ぎれば中止
                 {
                     WHBLogPrintf("%s is Failed: Data is too long", commandStr.c_str()); // データが長すぎます
-                    SendError(socket, startTime);
+                    SendError(socket, startTime, ERROR_DATA_TOO_LONG);
                     return;
                 }
             
@@ -508,7 +502,7 @@ namespace TCPServer
                     else // 不正なアドレス
                     {
                         WHBLogPrintf("%s is Failed: Address is invalid", commandStr.c_str()); // アドレスが無効です
-                        SendError(socket, startTime);
+                        SendError(socket, startTime, ERROR_ADDRESS_INVALID);
                         return;
                     }
                 }
@@ -521,7 +515,7 @@ namespace TCPServer
         }
         if(response.size() == 0)
         {
-            SendError(socket, startTime); // 応答がなければ失敗
+            SendError(socket, startTime, ERROR_DATA_EMPTY); // 応答がなければ失敗
         }
         else
         {
@@ -540,9 +534,11 @@ namespace TCPServer
         WHBLogPrintf("Processing complete: %lld ms", duration); // かかった時間を表示
     }
 
-    void SendError(int socket, auto startTime)
+    void SendError(int socket, auto startTime, uint8_t errorCode)
     {
         Packet packet;
+        packet.Data = Bytes();
+        packet.Data.append(errorCode);
         packet.Type = Packet::DATA_TYPE_NULL;
         packet.SendPacket(socket);
         auto endTime = chrono::high_resolution_clock::now(); // 計測終了
