@@ -31,12 +31,8 @@ int32_t Packet::SendPacket(int32_t socket)
 {
     uint32_t size = Data.size();
     WHBLogPrintf("Data size:%d", size);
-    if(size == 0) // データが空
-    {
-        WHBLogPrintf("Data to send is empty");
-        return -1;
-    }
-    else if(size > MAX_PACKET_SIZE) // データが大きすぎる
+
+    if(size > MAX_PACKET_SIZE) // データが大きすぎる
     {
         WHBLogPrintf("Data to send is too large:%dbytes", size);
         return -1;
@@ -47,6 +43,13 @@ int32_t Packet::SendPacket(int32_t socket)
     header.append(Type);
     int32_t result = Transfer::SendAll(socket, header); // ヘッダを送信
     if(result <= 0) return result; // 送信失敗
+
+    if(size == 0) // データが空
+    {
+        WHBLogPrintf("Data to send is empty");
+        return -1;
+    }
+    
     return Transfer::SendAll(socket, Data); // データを送信
 }
 
