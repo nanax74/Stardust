@@ -14,4 +14,5 @@ namespace TCPServer
     void AcceptClient();
     void DisconnectClient();
     void ReceiveFromClient();
+    void UpdateOther();
 }

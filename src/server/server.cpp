@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstring> // memset
 #include <fcntl.h>
+#include <format>
 
 // wut
 #include <arpa/inet.h> // ネット関連の処理に必要
@@ -14,6 +15,7 @@
 
 // stardust
 #include "command.hpp"
+#include "../exception/callback.hpp"
 #include "../transfer/packet.hpp"
 #include "../utils/bytes.hpp"
 
@@ -125,6 +127,7 @@ namespace TCPServer
     {
         AcceptClient();
         ReceiveFromClient();
+        UpdateOther();
     }
 
     // 終了
@@ -203,6 +206,16 @@ namespace TCPServer
             {
                 ProcessCommand(clientSocket, packet.Data); // コマンドを処理
             }
+        }
+    }
+
+    void UpdateOther()
+    {
+        if(Exception::isNotification)
+        {
+            string message = format("DSI Exception: {:08X}", Exception::contextForNotification.srr0);
+            NotificationModule_AddInfoNotification(message.c_str());
+            Exception::isNotification = false; // 通知が完了したらフラグをリセット
         }
     }
 }

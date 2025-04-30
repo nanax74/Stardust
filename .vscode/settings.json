@@ -69,6 +69,7 @@
         "codecvt": "cpp",
         "any": "cpp",
         "fstream": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "bitset": "cpp"
     }
 }

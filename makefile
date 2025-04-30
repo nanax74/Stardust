@@ -31,7 +31,11 @@ LIB_INC := $(PORTLIBS)/include
 TARGET		:=	Stardust
 BUILD		:=	build
 SOURCES		:=	src \
+				src/assembly \
+				src/exception \
+				src/patch \
 				src/server \
+				src/syscall \
 				src/transfer \
 				src/utils
 DATA		:=	data
@@ -47,7 +51,7 @@ CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ -D__WUPS__
 
 CXXFLAGS	:= $(CFLAGS) -std=c++23
 
-ASFLAGS	:=	-g $(ARCH)
+ASFLAGS	:=	-g $(ARCH) -mregnames
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libkernel.ld $(WUPSSPECS)
 
 LIBS	:= -lwups -lwut -lnotifications -lkernel
@@ -93,7 +97,7 @@ endif
 #-------------------------------------------------------------------------------
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
-export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s.o)
+export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
 export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
@@ -141,10 +145,17 @@ $(OFILES_SRC)	: $(HFILES_BIN)
 	@echo $(notdir $<)
 	@$(bin2o)
 
+#-------------------------------------------------------------------------------
 %.pem.o	%_pem.h :	%.pem
 #-------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@$(bin2o)
+
+#-------------------------------------------------------------------------------
+%.o: %.s
+#-------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d -x assembler-with-cpp $(ASFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
 -include $(DEPENDS)
 
