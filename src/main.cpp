@@ -24,6 +24,8 @@ WUPS_PLUGIN_LICENSE("GPLv3");
 WUPS_USE_WUT_DEVOPTAB(); // ファイルの読み書きに必須(無いとフリーズ)
 WUPS_USE_STORAGE("stardust"); // ストレージAPIの個別ID(なくても一応ファイルの読み書きはできるが念のため入れておく)
 
+TCPServer* server;
+
 INITIALIZE_PLUGIN()
 {
     NotificationModule_InitLibrary();
@@ -34,11 +36,15 @@ INITIALIZE_PLUGIN()
 ON_APPLICATION_START()
 {
     WHBLogUdpInit();
-    TCPServer::Init();
+    server = new TCPServer(9999);
 }
 
 ON_APPLICATION_REQUESTS_EXIT()
 {
-    TCPServer::Deinit();
+    if (server)
+    {
+        delete server;
+        server = nullptr;
+    }
     WHBLogUdpDeinit();
 }
