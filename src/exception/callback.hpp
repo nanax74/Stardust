@@ -2,14 +2,14 @@
 
 // std
 #include <cstdint>
+#include <vector>
 
 // wut
 #include <coreinit/exception.h>
 
 namespace Exception
 {
-    extern bool isNotification;
-    extern OSContext contextForNotification;
+    extern std::vector<OSContext> contextBuffer;
 
     namespace SystemReset
     {

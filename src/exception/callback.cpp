@@ -21,8 +21,7 @@ using namespace std;
 namespace Exception
 {
     // 通知用の変数
-    bool isNotification = false;
-    OSContext contextForNotification;
+    vector<OSContext> contextBuffer;
 
     // クラッシュ処理
     void Panic(string exceptionType, OSContext* context)
@@ -63,8 +62,7 @@ namespace Exception
             else
             {
                 // 通知の準備
-                memcpy(&contextForNotification, context, sizeof(OSContext));
-                isNotification = true;
+                contextBuffer.push_back(*context);
 
                 // 復帰処理
                 context->srr0 += 4;

@@ -11,6 +11,7 @@
 
 namespace Syscall
 {
+    const uint32_t SET_DABR = 0;
     // システムコール経由で関数を呼び出すためのハンドラー
     //
     // 呼び出し例:

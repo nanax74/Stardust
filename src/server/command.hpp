@@ -25,4 +25,6 @@ namespace TCPServer
 
     void SendSuccess(int socket, auto startTime, Bytes response);
     void SendError(int socket, auto startTime, uint8_t errorCode);
+
+    void SetContextPacket(Bytes& response);
 }

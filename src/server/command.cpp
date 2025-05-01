@@ -10,17 +10,22 @@
 #include <whb/log.h>
 
 // stardust
+#include "../assembly/instruction.hpp"
+#include "../exception/callback.hpp"
+#include "../syscall/implement.hpp"
 #include "../transfer/packet.hpp"
 #include "../utils/compare.hpp"
 #include "../utils/math.hpp"
 #include "../utils/memory.hpp"
 
-const uint8_t COMMAND_READ         = 0x00; // バイト数制限付き
-const uint8_t COMMAND_WRITE        = 0x01; // バイト数制限付き
-const uint8_t COMMAND_SEARCH_DUMP  = 0x02; // サーチ用のダンプ
-const uint8_t COMMAND_SEARCH_SPEC  = 0x03; // ダンプからサーチ
-const uint8_t COMMAND_SEARCH_UNKN  = 0x04; // ダンプからサーチ
-const uint8_t COMMAND_WRITE_KERNEL = 0x05; // カーネル書き込み
+const uint8_t COMMAND_READ                = 0x00; // バイト数制限付き
+const uint8_t COMMAND_WRITE               = 0x01; // バイト数制限付き
+const uint8_t COMMAND_SEARCH_DUMP         = 0x02; // サーチ用のダンプ
+const uint8_t COMMAND_SEARCH_SPEC         = 0x03; // ダンプからサーチ
+const uint8_t COMMAND_SEARCH_UNKN         = 0x04; // ダンプからサーチ
+const uint8_t COMMAND_WRITE_KERNEL        = 0x05; // カーネル書き込み
+const uint8_t COMMAND_SET_DATA_BREAKPOINT = 0x06; // データブレークポイント設定
+const uint8_t COMMAND_SEND_CONTEXT        = 0x07; // コンテキスト送信
 
 const uint8_t VALUE_INT8   = 0x00;
 const uint8_t VALUE_UINT8  = 0x01;
@@ -508,6 +513,27 @@ namespace TCPServer
                 }
                 break;
             }
+            case COMMAND_SET_DATA_BREAKPOINT:
+            {
+                // アドレス(例:15000000 -> 0x15000000にDataBreakpointを設定する)
+
+                if(dataLength < HEADER_SIZE + sizeof(uint32_t)) // コマンドの長さが足りなければ中止
+                {
+                    WHBLogPrintf("%s is Failed: Command is too short", commandStr.c_str());
+                    SendError(socket, startTime, ERROR_COMMAND_INVALID);
+                    return;
+                }
+
+                uint32_t value = data.get<uint32_t>(dataIndex); // 書き込むメモリアドレスを取得
+                SetDataBreakpoint(value); // DABRにアドレスを書き込む
+                break;
+            }
+            case COMMAND_SEND_CONTEXT: // Breakpoint発動時に取得したコンテキストをまとめて送信する
+            {
+                // コマンドIDのみでOK
+                SetContextPacket(response);
+                break;
+            }
             default:
             {
                 break;
@@ -544,5 +570,14 @@ namespace TCPServer
         auto endTime = chrono::high_resolution_clock::now(); // 計測終了
         auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count(); // 経過時間を算出
         WHBLogPrintf("Processing failed: %lld ms", duration); // かかった時間を表示
+    }
+
+    void SetContextPacket(Bytes& response)
+    {
+        for(OSContext context : Exception::contextBuffer)
+        {
+            response.append(context.srr0);
+        }
+        Exception::contextBuffer.clear();
     }
 }

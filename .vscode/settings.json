@@ -70,6 +70,7 @@
         "any": "cpp",
         "fstream": "cpp",
         "typeindex": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "text_encoding": "cpp"
     }
 }
