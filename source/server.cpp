@@ -76,13 +76,24 @@ Server::Server()
             receiveThread.Main(token, this);
         }
     );
+
+    // 処理ループを開始
+    processThread.thread = std::jthread
+    (
+        [this](std::stop_token token)
+        {
+            processThread.Main(token, this);
+        }
+    );
 }
 
 Server::~Server()
 {
     CloseClientSocket();
     CloseServerSocket();
+    acceptThread.Stop();
     receiveThread.Stop();
+    processThread.Stop();
     nn::ac::Finalize();
 }
 
@@ -201,58 +212,61 @@ void Server::CloseServerSocket()
 // スレッド
 void Server::ReceiveThread::Main(std::stop_token token, Server* server)
 {
-    while(!token.stop_requested())
+    constexpr size_t BUFFER_SIZE = 4096;
+    std::vector<uint8_t> buffer(BUFFER_SIZE);
+
+    while (!token.stop_requested())
     {
+        std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
+
+        for (auto it = server->clientSockets.begin(); it != server->clientSockets.end(); )
         {
-            std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
+            int clientSock = *it;
 
-            for(auto it = server->clientSockets.begin(); it != server->clientSockets.end(); )
+            ssize_t received = recv(clientSock, buffer.data(), buffer.size(), MSG_DONTWAIT);
+
+            if (received == 0)
             {
-                int clientSock = *it;
-                char dummy;
+                // クライアントが切断した場合
+                std::string msg = std::format("Client disconnected: Socket {}", clientSock);
+                NotificationModule_AddInfoNotification(msg.c_str());
 
-                // recvで0バイト受信なら切断と判定、-1はエラーか無データ
-                ssize_t ret = recv(clientSock, &dummy, 1, MSG_PEEK | MSG_DONTWAIT);
-
-                if (ret == 0)
+                shutdown(clientSock, SHUT_RDWR);
+                close(clientSock);
+                it = server->clientSockets.erase(it);
+                continue;
+            }
+            else if (received < 0)
+            {
+                if (errno == EAGAIN || errno == EWOULDBLOCK)
                 {
-                    // クライアント切断 detected
-                    std::string msg = std::format("Client disconnected: Socket {}", clientSock);
-                    NotificationModule_AddInfoNotification(msg.c_str());
-
-                    shutdown(clientSock, SHUT_RDWR);
-                    close(clientSock);
-
-                    // リストから削除
-                    it = server->clientSockets.erase(it);
+                    // データなし：問題なし
+                    ++it;
                     continue;
-                }
-                else if (ret < 0)
-                {
-                    if(errno == EAGAIN || errno == EWOULDBLOCK)
-                    {
-                        // データなし。問題なし。次のソケットへ。
-                        ++it;
-                        continue;
-                    }
-                    else
-                    {
-                        // その他エラーも切断扱いにするなら以下のように処理しても良い
-                        std::string msg = std::format("Recv error on socket {}: errno {}", clientSock, errno);
-                        NotificationModule_AddErrorNotification(msg.c_str());
-
-                        shutdown(clientSock, SHUT_RDWR);
-                        close(clientSock);
-
-                        it = server->clientSockets.erase(it);
-                        continue;
-                    }
                 }
                 else
                 {
-                    // データあり or ret > 0 だけど今回は無視
-                    ++it;
+                    std::string msg = std::format("Recv error on socket {}: errno {}", clientSock, errno);
+                    NotificationModule_AddErrorNotification(msg.c_str());
+
+                    shutdown(clientSock, SHUT_RDWR);
+                    close(clientSock);
+                    it = server->clientSockets.erase(it);
+                    continue;
                 }
+            }
+            else
+            {
+                // データ受信あり
+                std::vector<uint8_t> packet(buffer.begin(), buffer.begin() + received);
+
+                {
+                    std::lock_guard<std::mutex> queueLock(server->queueMutex);
+                    server->receiveQueue.push(std::move(packet));
+                }
+
+                server->queueCondVar.notify_one();
+                ++it;
             }
         }
 
@@ -305,6 +319,52 @@ void Server::AcceptThread::Main(std::stop_token token, Server* server)
 }
 
 void Server::AcceptThread::Stop()
+{
+    if (thread.joinable())
+    {
+        thread.request_stop();
+        thread.join();
+    }
+}
+
+void Server::ProcessThread::Main(std::stop_token token, Server* server)
+{
+    while (!token.stop_requested())
+    {
+        std::unique_lock<std::mutex> lock(server->queueMutex);
+
+        // 条件変数で通知を待つ（キューが空でなければすぐ進む）
+        server->queueCondVar.wait(lock, [&]()
+        {
+            return !server->receiveQueue.empty() || token.stop_requested();
+        });
+
+        if (token.stop_requested())
+        {
+            break;
+        }
+
+        // キューからデータを取り出す
+        std::vector<uint8_t> data = std::move(server->receiveQueue.front());
+        server->receiveQueue.pop();
+        lock.unlock();  // 早めにロックを解放
+
+        // 実際のデータ処理（ここを書き換えて独自処理に）
+        std::string hex;
+        for (uint8_t byte : data)
+        {
+            hex += std::format("{:02X} ", byte);
+        }
+
+        std::string msg = std::format("Received {} bytes: {}", data.size(), hex);
+        NotificationModule_AddInfoNotification(msg.c_str());
+
+        // 処理負荷軽減のため適宜スリープも検討（必要なら）
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
+
+void Server::ProcessThread::Stop()
 {
     if (thread.joinable())
     {

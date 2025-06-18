@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory> // unique_ptr
 #include <mutex> // スレッドへの同時アクセスを制限
+#include <queue>
 #include <thread>
 #include <vector>
 
@@ -17,9 +18,9 @@ public:
     ~Server();
     
 private:
-    const int32_t SOCKET_NULL = -1; // 空のソケット
-    const uint32_t IP_ADDRESS_NULL = 0; // 空のIPアドレス
-    const uint32_t SERVER_BACKLOG = 128; // ソケットの最大同時待機数
+    static constexpr const int32_t SOCKET_NULL = -1; // 空のソケット
+    static constexpr const uint32_t IP_ADDRESS_NULL = 0; // 空のIPアドレス
+    static constexpr const uint32_t SERVER_BACKLOG = 128; // ソケットの最大同時待機数
     uint16_t port = 50000;
     uint32_t ipAddress;
     int serverSocket;
@@ -27,6 +28,14 @@ private:
     std::vector<int> clientSockets;
 
     Server();
+
+    // コピー禁止
+    Server(const Server&) = delete;
+    Server& operator=(const Server&) = delete;
+
+    // 移動禁止
+    Server(Server&&) = delete;
+    Server& operator=(Server&&) = delete;
 
     bool initialized = false;
 
@@ -52,6 +61,11 @@ private:
         void Stop();
     };
 
+    ReceiveThread receiveThread;
+    std::queue<std::vector<uint8_t>> receiveQueue;
+    std::mutex queueMutex;
+    std::condition_variable queueCondVar;
+
     class AcceptThread
     {
     public:
@@ -60,8 +74,17 @@ private:
         void Stop();
     };
 
-    ReceiveThread receiveThread;
     AcceptThread acceptThread;
+
+    class ProcessThread
+    {
+    public:
+        std::jthread thread;
+        void Main(std::stop_token token, Server* server);
+        void Stop();
+    };
+
+    ProcessThread processThread;
 };
 
 extern std::unique_ptr<Server> gServer;
