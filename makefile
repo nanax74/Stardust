@@ -1,164 +1,123 @@
-#-------------------------------------------------------------------------------
-.SUFFIXES:
-#-------------------------------------------------------------------------------
+#===============================================================================
+# Plugin Makefile for WUPS-based Wii U development
+#===============================================================================
 
-ifeq ($(strip $(DEVKITPRO)),)
-$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
-endif
-
-TOPDIR ?= $(CURDIR)
-
+# 引用するルールの定義（WUPS用）
 include $(DEVKITPRO)/wups/share/wups_rules
 
-PORTLIBS := $(DEVKITPRO)/portlibs/ppc
+#===============================================================================
+# ディレクトリ設定
+#===============================================================================
+TOPDIR ?= $(CURDIR)
 
-WUT_ROOT := $(DEVKITPRO)/wut
-WUPS_ROOT := $(DEVKITPRO)/wups
-WUMS_ROOT := $(DEVKITPRO)/wums
+WUT_ROOT   := $(DEVKITPRO)/wut
+WUPS_ROOT  := $(DEVKITPRO)/wups
+WUMS_ROOT  := $(DEVKITPRO)/wums
 
-#-------------------------------------------------------------------------------
-# Library include path
-#-------------------------------------------------------------------------------
-LIB_INC := $(PORTLIBS)/include
+TARGET      := Stardust
+BUILD       := build
 
-#-------------------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# DATA is a list of directories containing data files
-# INCLUDES is a list of directories containing header files
-#-------------------------------------------------------------------------------
-TARGET		:=	Stardust
-BUILD		:=	build
-SOURCES		:=	src \
-				src/assembly \
-				src/exception \
-				src/patch \
-				src/server \
-				src/syscall \
-				src/transfer \
-				src/utils
-DATA		:=	data
-INCLUDES	:=	include
+ROOT_SOURCE := $(TOPDIR)/source
+SOURCES := $(shell find $(ROOT_SOURCE) -type d)
+SOURCES := $(foreach source,$(SOURCES),$(source:$(TOPDIR)/%=%)/)
 
-#-------------------------------------------------------------------------------
-# options for code generation
-#-------------------------------------------------------------------------------
-CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
-			$(MACHDEP)
+DATA        := data
+INCLUDES    := include
 
-CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ -D__WUPS__
+#===============================================================================
+# コンパイルオプション
+#===============================================================================
+CFLAGS     := -g -Wall -O2 -ffunction-sections $(MACHDEP)
+CFLAGS     += $(INCLUDE) -D__WIIU__ -D__WUT__ -D__WUPS__
+CXXFLAGS   := $(CFLAGS) -std=c++23
+ASFLAGS    := -g $(ARCH) -mregnames
+LDFLAGS    := -g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS)
 
-CXXFLAGS	:= $(CFLAGS) -std=c++23
+LIBS       := -lwups -lwut -lnotifications
 
-ASFLAGS	:=	-g $(ARCH) -mregnames
-LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libkernel.ld $(WUPSSPECS)
+# ライブラリのルートディレクトリ
+LIBDIRS    := $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT)
 
-LIBS	:= -lwups -lwut -lnotifications -lkernel
-
-#-------------------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level
-# containing include and lib
-#-------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT)
-
-#-------------------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
-#-------------------------------------------------------------------------------
+#===============================================================================
+# ビルドルール（BUILDディレクトリでビルド実行）
+#===============================================================================
 ifneq ($(BUILD),$(notdir $(CURDIR)))
-#-------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT := $(CURDIR)/$(TARGET)
 export TOPDIR	:=	$(CURDIR)
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+# パス設定
+export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+                $(foreach dir,$(DATA),$(CURDIR)/$(dir))
+export DEPSDIR := $(CURDIR)/$(BUILD)
 
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
-
+# ファイル収集
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
-#-------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#-------------------------------------------------------------------------------
+# リンカ選択（C++ファイルが存在すればCXXでリンク）
 ifeq ($(strip $(CPPFILES)),)
-#-------------------------------------------------------------------------------
-	export LD	:=	$(CC)
-#-------------------------------------------------------------------------------
+	export LD := $(CC)
 else
-#-------------------------------------------------------------------------------
-	export LD	:=	$(CXX)
-#-------------------------------------------------------------------------------
+	export LD := $(CXX)
 endif
-#-------------------------------------------------------------------------------
 
-export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
-export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
-export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
-export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
+# オブジェクトファイルとヘッダー生成対象
+export OFILES_BIN  := $(addsuffix .o,$(BINFILES))
+export OFILES_SRC  := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES      := $(OFILES_BIN) $(OFILES_SRC)
+export HFILES_BIN  := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			-I$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD) -I$(LIB_INC)
+# インクルードパス・ライブラリパス
+export INCLUDE     := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+                      $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+                      -I$(CURDIR)/$(BUILD)
+export LIBPATHS    := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+#===============================================================================
+# エントリーポイント
+#===============================================================================
+.PHONY: all clean $(BUILD)
 
-.PHONY: $(BUILD) clean all
-
-#-------------------------------------------------------------------------------
 all: $(BUILD)
 
 $(BUILD):
-	@[ -d $@ ] || mkdir -p $@
+	@$(shell [ ! -d $(BUILD) ] && mkdir -p $(BUILD))
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
-#-------------------------------------------------------------------------------
 clean:
-	@echo clean ...
+	@echo cleaning ...
 	@rm -fr $(BUILD) $(TARGET).wps $(TARGET).elf
 
-#-------------------------------------------------------------------------------
-else
-.PHONY:	all
+#===============================================================================
+else  # $(BUILD) ディレクトリでの処理
+#===============================================================================
+.PHONY: all
 
-DEPENDS	:=	$(OFILES:.o=.d)
-
-#-------------------------------------------------------------------------------
-# main targets
-#-------------------------------------------------------------------------------
-all	:	$(OUTPUT).wps
-
-$(OUTPUT).wps	:	$(OUTPUT).elf
-$(OUTPUT).elf	:	$(OFILES)
-
-$(OFILES_SRC)	: $(HFILES_BIN)
+DEPENDS := $(OFILES:.o=.d)
 
 #-------------------------------------------------------------------------------
-# you need a rule like this for each extension you use as binary data
+# メインターゲット
 #-------------------------------------------------------------------------------
-%.bin.o	%_bin.h :	%.bin
+all: $(OUTPUT).wps
+
+# 依存関係
+$(OUTPUT).wps: $(OUTPUT).elf
+$(OUTPUT).elf: $(OFILES)
+
+$(OFILES_SRC): $(HFILES_BIN)
+
 #-------------------------------------------------------------------------------
+# バイナリファイルの変換（*.bin → .o/.h）
+#-------------------------------------------------------------------------------
+%.bin.o %_bin.h: %.bin
 	@echo $(notdir $<)
 	@$(bin2o)
 
-#-------------------------------------------------------------------------------
-%.pem.o	%_pem.h :	%.pem
-#-------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-
-#-------------------------------------------------------------------------------
-%.o: %.s
-#-------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d -x assembler-with-cpp $(ASFLAGS) -c $< -o $@ $(ERROR_FILTER)
-
+# 依存関係の自動読み込み
 -include $(DEPENDS)
 
-#-------------------------------------------------------------------------------
 endif
-#-------------------------------------------------------------------------------
+#===============================================================================
