@@ -12,6 +12,7 @@
 
 // stardust
 #include "exception/callback.hpp"
+#include "server.hpp"
 
 WUPS_PLUGIN_NAME("Stardust");
 WUPS_PLUGIN_DESCRIPTION("TCPServer");
@@ -32,6 +33,7 @@ INITIALIZE_PLUGIN()
 ON_APPLICATION_START()
 {
     WHBLogUdpInit();
+    gServer = Server::Create();
 }
 
 ON_APPLICATION_REQUESTS_EXIT()
