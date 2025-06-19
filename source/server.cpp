@@ -360,7 +360,7 @@ void Server::ProcessThread::Main(std::stop_token token, Server* server)
         NotificationModule_AddInfoNotification(msg.c_str());
 
         // 処理負荷軽減のため適宜スリープも検討（必要なら）
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
