@@ -44,6 +44,7 @@ private:
     void CreateSocket(); // ソケットの作成
     void SetSocketReusable(); // ソケットを再利用できるように設定
     void SetSocketNonBlocking(); // 非ブロッキングに設定
+    void SetSocketNoDelay(); // TCP_NODELAYオプションを設定
     void SetServerInfo(sockaddr_in& info); // IPアドレスやポート番号を設定
     void BindSocket(sockaddr_in& info); // ソケットにアドレス情報をバインド
     void ListenSocket();

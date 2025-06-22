@@ -2,10 +2,12 @@
 #include <chrono>
 #include <fcntl.h>
 #include <memory> // unique_ptr
+#include <poll.h>
 #include <string>
 #include <thread>
 
 // wut
+#include <netinet/tcp.h> // TCP_NODELAY
 #include <nn/ac.h> // WiiUのIPアドレスを取得
 #include <notifications/notifications.h>
 #include <unistd.h> // close関数に必要
@@ -151,6 +153,16 @@ void Server::SetSocketNonBlocking()
     }
 }
 
+// TCP_NODELAYオプションを設定
+void Server::SetSocketNoDelay()
+{
+    int option = 1;
+    if (setsockopt(serverSocket, IPPROTO_TCP, TCP_NODELAY, &option, sizeof(option)) < 0)
+    {
+        throw std::runtime_error("Failed to set option: TCP_NODELAY");
+    }
+}
+
 // IPアドレスやポート番号を設定
 void Server::SetServerInfo(sockaddr_in& info)
 {
@@ -217,60 +229,80 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
 
     while (!token.stop_requested())
     {
-        std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
-
-        for (auto it = server->clientSockets.begin(); it != server->clientSockets.end(); )
+        std::vector<struct pollfd> pollfds;
         {
-            int clientSock = *it;
-
-            ssize_t received = recv(clientSock, buffer.data(), buffer.size(), MSG_DONTWAIT);
-
-            if (received == 0)
+            std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
+            for (int sock : server->clientSockets)
             {
-                // クライアントが切断した場合
-                std::string msg = std::format("Client disconnected: Socket {}", clientSock);
-                NotificationModule_AddInfoNotification(msg.c_str());
-
-                shutdown(clientSock, SHUT_RDWR);
-                close(clientSock);
-                it = server->clientSockets.erase(it);
-                continue;
-            }
-            else if (received < 0)
-            {
-                if (errno == EAGAIN || errno == EWOULDBLOCK)
-                {
-                    // データなし：問題なし
-                    ++it;
-                    continue;
-                }
-                else
-                {
-                    std::string msg = std::format("Recv error on socket {}: errno {}", clientSock, errno);
-                    NotificationModule_AddErrorNotification(msg.c_str());
-
-                    shutdown(clientSock, SHUT_RDWR);
-                    close(clientSock);
-                    it = server->clientSockets.erase(it);
-                    continue;
-                }
-            }
-            else
-            {
-                // データ受信あり
-                std::vector<uint8_t> packet(buffer.begin(), buffer.begin() + received);
-
-                {
-                    std::lock_guard<std::mutex> queueLock(server->queueMutex);
-                    server->receiveQueue.push(std::move(packet));
-                }
-
-                server->queueCondVar.notify_one();
-                ++it;
+                struct pollfd pfd;
+                pfd.fd = sock;
+                pfd.events = POLLIN; // 読み込み可能なイベント
+                pfd.revents = 0;
+                pollfds.push_back(pfd);
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if (pollfds.empty())
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+
+        int ret = poll(pollfds.data(), pollfds.size(), 100); // タイムアウト100ms
+        if (ret < 0)
+        {
+            NotificationModule_AddErrorNotification("poll failed");
+            break;
+        }
+        else if (ret == 0)
+        {
+            continue; // タイムアウト：何もせず続行
+        }
+
+        std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
+        for (size_t i = 0; i < pollfds.size(); ++i)
+        {
+            if (pollfds[i].revents & POLLIN)
+            {
+                int clientSock = pollfds[i].fd;
+
+                ssize_t received = recv(clientSock, buffer.data(), buffer.size(), 0); // MSG_DONTWAIT は不要
+
+                if (received == 0)
+                {
+                    std::string msg = std::format("Client disconnected: Socket {}", clientSock);
+                    NotificationModule_AddInfoNotification(msg.c_str());
+                    shutdown(clientSock, SHUT_RDWR);
+                    close(clientSock);
+                    server->clientSockets.erase(std::remove(
+                        server->clientSockets.begin(),
+                        server->clientSockets.end(),
+                        clientSock
+                    ), server->clientSockets.end());
+                }
+                else if (received < 0)
+                {
+                    std::string msg = std::format("Recv error on socket {}: errno {}", clientSock, errno);
+                    NotificationModule_AddErrorNotification(msg.c_str());
+                    shutdown(clientSock, SHUT_RDWR);
+                    close(clientSock);
+                    server->clientSockets.erase(std::remove(
+                        server->clientSockets.begin(),
+                        server->clientSockets.end(),
+                        clientSock
+                    ), server->clientSockets.end());
+                }
+                else
+                {
+                    std::vector<uint8_t> packet(buffer.begin(), buffer.begin() + received);
+                    {
+                        std::lock_guard<std::mutex> queueLock(server->queueMutex);
+                        server->receiveQueue.push(std::move(packet));
+                    }
+                    server->queueCondVar.notify_one();
+                }
+            }
+        }
     }
 }
 
@@ -358,6 +390,20 @@ void Server::ProcessThread::Main(std::stop_token token, Server* server)
 
         std::string msg = std::format("Received {} bytes: {}", data.size(), hex);
         NotificationModule_AddInfoNotification(msg.c_str());
+
+        {
+            std::lock_guard<std::mutex> clientLock(server->clientSocketsMutex);
+            std::string reply = "受信しました: " + std::to_string(data.size()) + " bytes\n";
+            for (int clientSock : server->clientSockets)
+            {
+                ssize_t sent = send(clientSock, reply.c_str(), reply.size(), MSG_DONTWAIT);
+                if (sent < 0)
+                {
+                    std::string err = std::format("送信失敗: socket={}, errno={}", clientSock, errno);
+                    NotificationModule_AddErrorNotification(err.c_str());
+                }
+            }
+        }
 
         // 処理負荷軽減のため適宜スリープも検討（必要なら）
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
