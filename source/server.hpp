@@ -54,6 +54,16 @@ private:
     void CloseClientSocket();
     void CloseServerSocket();
 
+    class AcceptThread
+    {
+    public:
+        std::jthread thread;
+        void Main(std::stop_token token, Server* server);
+        void Stop();
+    };
+
+    AcceptThread acceptThread;
+
     class ReceiveThread
     {
     public:
@@ -66,16 +76,6 @@ private:
     std::queue<std::vector<uint8_t>> receiveQueue;
     std::mutex queueMutex;
     std::condition_variable queueCondVar;
-
-    class AcceptThread
-    {
-    public:
-        std::jthread thread;
-        void Main(std::stop_token token, Server* server);
-        void Stop();
-    };
-
-    AcceptThread acceptThread;
 
     class ProcessThread
     {

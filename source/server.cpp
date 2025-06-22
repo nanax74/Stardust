@@ -221,6 +221,50 @@ void Server::CloseServerSocket()
     }
 }
 
+// クライアントの接続待機
+void Server::AcceptThread::Main(std::stop_token token, Server* server)
+{
+    NotificationModule_AddInfoNotification("Waiting for client to connect");
+
+    while(!token.stop_requested())
+    {
+        sockaddr_in clientAddr;
+        socklen_t clientLen = sizeof(clientAddr);
+        int clientSock = accept(server->serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
+
+        if(clientSock < 0)
+        {
+            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                continue;
+            }
+            std::string msg = std::format("Accept failed: {}", errno);
+            NotificationModule_AddErrorNotification(msg.c_str());
+            continue;
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
+            server->clientSockets.push_back(clientSock);
+        }
+
+        char ipStr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(clientAddr.sin_addr), ipStr, INET_ADDRSTRLEN);
+        std::string msg = std::format("Client connected: {} Socket: {}", ipStr, clientSock);
+        NotificationModule_AddInfoNotification(msg.c_str());
+    }
+}
+
+void Server::AcceptThread::Stop()
+{
+    if (thread.joinable())
+    {
+        thread.request_stop();
+        thread.join();
+    }
+}
+
 // スレッド
 void Server::ReceiveThread::Main(std::stop_token token, Server* server)
 {
@@ -307,50 +351,6 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
 }
 
 void Server::ReceiveThread::Stop()
-{
-    if (thread.joinable())
-    {
-        thread.request_stop();
-        thread.join();
-    }
-}
-
-// クライアントの接続待機
-void Server::AcceptThread::Main(std::stop_token token, Server* server)
-{
-    NotificationModule_AddInfoNotification("Waiting for client to connect");
-
-    while(!token.stop_requested())
-    {
-        sockaddr_in clientAddr;
-        socklen_t clientLen = sizeof(clientAddr);
-        int clientSock = accept(server->serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
-
-        if(clientSock < 0)
-        {
-            if(errno == EAGAIN || errno == EWOULDBLOCK)
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                continue;
-            }
-            std::string msg = std::format("Accept failed: {}", errno);
-            NotificationModule_AddErrorNotification(msg.c_str());
-            continue;
-        }
-
-        {
-            std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
-            server->clientSockets.push_back(clientSock);
-        }
-
-        char ipStr[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &(clientAddr.sin_addr), ipStr, INET_ADDRSTRLEN);
-        std::string msg = std::format("Client connected: {} Socket: {}", ipStr, clientSock);
-        NotificationModule_AddInfoNotification(msg.c_str());
-    }
-}
-
-void Server::AcceptThread::Stop()
 {
     if (thread.joinable())
     {
