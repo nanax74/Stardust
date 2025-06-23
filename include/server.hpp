@@ -73,7 +73,7 @@ private:
     };
 
     ReceiveThread receiveThread;
-    std::queue<std::vector<uint8_t>> receiveQueue;
+    std::queue<std::pair<int, std::vector<uint8_t>>> receiveQueue;
     std::mutex queueMutex;
     std::condition_variable queueCondVar;
 

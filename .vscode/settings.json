@@ -71,6 +71,7 @@
         "fstream": "cpp",
         "typeindex": "cpp",
         "bitset": "cpp",
-        "text_encoding": "cpp"
+        "text_encoding": "cpp",
+        "queue": "cpp"
     }
 }

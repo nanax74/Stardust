@@ -5,6 +5,7 @@
 #include <notifications/notifications.h>
 
 #include "commands/write_memory.hpp"
+#include "commands/specific_search.hpp"
 
 std::unordered_map<uint32_t, CommandDispatcher::HandlerFunc> CommandDispatcher::handlers;
 
@@ -14,24 +15,7 @@ void CommandDispatcher::RegisterHandlers()
     handlers[1] = Command::WriteMemory;
 
     // メモリ検索
-    handlers[2] = [](Packet& packet)
-    {
-        uint32_t start = packet.Read<uint32_t>();
-        uint32_t end   = packet.Read<uint32_t>();
-        uint32_t val   = packet.Read<uint32_t>();
-
-        for (uint32_t addr = start; addr < end; addr += 4)
-        {
-            if (*((uint32_t*)addr) == val)
-            {
-                NotificationModule_AddInfoNotification(
-                    std::format("Found at 0x{:08X}", addr).c_str()
-                );
-                return;
-            }
-        }
-        NotificationModule_AddInfoNotification("Value not found");
-    };
+    handlers[2] = Command::SpecificSearch;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)

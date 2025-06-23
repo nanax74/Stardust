@@ -272,7 +272,7 @@ void Server::AcceptThread::Stop()
 // スレッド
 void Server::ReceiveThread::Main(std::stop_token token, Server* server)
 {
-    constexpr size_t BUFFER_SIZE = 4096;
+    constexpr size_t BUFFER_SIZE = 0x1000;
     std::vector<uint8_t> buffer(BUFFER_SIZE);
 
     while (!token.stop_requested())
@@ -314,7 +314,7 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
             {
                 int clientSock = pollfds[i].fd;
 
-                ssize_t received = recv(clientSock, buffer.data(), buffer.size(), 0); // MSG_DONTWAIT は不要
+                ssize_t received = recv(clientSock, buffer.data(), buffer.size(), 0);
 
                 if (received == 0)
                 {
@@ -345,7 +345,7 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
                     std::vector<uint8_t> packet(buffer.begin(), buffer.begin() + received);
                     {
                         std::lock_guard<std::mutex> queueLock(server->queueMutex);
-                        server->receiveQueue.push(std::move(packet));
+                        server->receiveQueue.push(std::make_pair(clientSock, std::move(packet)));
                     }
                     server->queueCondVar.notify_one();
                 }
@@ -381,14 +381,14 @@ void Server::ProcessThread::Main(std::stop_token token, Server* server)
         }
 
         // キューからデータを取り出す
-        std::vector<uint8_t> data = std::move(server->receiveQueue.front());
+        auto [clientSock, data] = std::move(server->receiveQueue.front());
         server->receiveQueue.pop();
         lock.unlock();  // 早めにロックを解放
 
         // 実際のデータ処理
         try
         {
-            Packet packet(data);
+            Packet packet(data, clientSock);
             CommandDispatcher::Dispatch(packet);
         }
         catch (const std::exception& e)

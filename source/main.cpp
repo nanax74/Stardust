@@ -38,9 +38,10 @@ ON_APPLICATION_START()
 
 ON_APPLICATION_REQUESTS_EXIT()
 {
-    WHBLogUdpDeinit();
     if (gServer)
     {
         gServer.reset();
+        gServer = nullptr;
     }
+    WHBLogUdpDeinit();
 }

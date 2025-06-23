@@ -11,7 +11,7 @@ class Packet
 {
 public:
     Packet();
-    Packet(const std::vector<uint8_t>& data);
+    Packet(const std::vector<uint8_t>& data, int socket = -1);
 
     template <typename T>
     void Write(const T& value);
@@ -26,9 +26,15 @@ public:
     void ResetCursor();
     size_t Size();
 
+    int GetSocket() const;
+    void SetSocket(int s);
+
+    void SendResponse(const std::vector<uint8_t>& response) const;
+
 private:
     std::vector<uint8_t> buffer;
     size_t cursor = 0;
+    int socket = -1;
 };
 
 // テンプレート関数の実装はヘッダー末尾に
