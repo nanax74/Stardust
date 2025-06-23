@@ -2,8 +2,6 @@
 
 #include <format>
 
-#include <notifications/notifications.h>
-
 namespace Command
 {
     void SpecificSearch(Packet& packet)
@@ -12,8 +10,8 @@ namespace Command
         Memory::SetProgressCallback([packet](float progress)
         {
             Packet response(packet.GetContext());
-            response.Write<uint32_t>(Command::ID_SpecificSearch);
-            response.Write<uint32_t>(Command::Response_Progress);
+            response.Write<uint32_t>(std::to_underlying(Command::ID::SpecificSearch));
+            response.Write<uint32_t>(std::to_underlying(Command::Response::Progress));
             response.Write<float>(progress);
             response.Send();
         });

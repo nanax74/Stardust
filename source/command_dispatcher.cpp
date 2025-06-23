@@ -6,17 +6,28 @@
 
 #include "commands/common.hpp"
 #include "commands/write_memory.hpp"
+#include "commands/dump_memory.hpp"
 #include "commands/specific_search.hpp"
+#include "commands/unknown_search.hpp"
 
-std::unordered_map<uint32_t, CommandDispatcher::HandlerFunc> CommandDispatcher::handlers;
+std::unordered_map<Command::ID, CommandDispatcher::HandlerFunc> CommandDispatcher::handlers;
 
 void CommandDispatcher::RegisterHandlers()
 {
     // メモリ書き込み
-    handlers[Command::ID_WriteMemory] = Command::WriteMemory;
+    handlers[Command::ID::WriteMemory] = Command::WriteMemory;
 
-    // メモリ検索
-    handlers[Command::ID_SpecificSearch] = Command::SpecificSearch;
+    // メモリ読み込み
+    handlers[Command::ID::ReadMemory] = Command::Dummy;
+
+    // メモリダンプ
+    handlers[Command::ID::DumpMemory] = Command::DumpMemory;
+
+    // 既知の値検索
+    handlers[Command::ID::SpecificSearch] = Command::Dummy;
+
+    // 未知の値検索
+    handlers[Command::ID::UnknownSearch] = Command::Dummy;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)
@@ -26,7 +37,7 @@ void CommandDispatcher::Dispatch(Packet& packet)
         throw std::runtime_error("Packet too small to contain command ID");
     }
 
-    uint32_t cmd = packet.Read<uint32_t>();
+    Command::ID cmd = static_cast<Command::ID>(packet.Read<uint32_t>());
     auto it = handlers.find(cmd);
     if (it == handlers.end())
     {

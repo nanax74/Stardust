@@ -3,7 +3,10 @@
 #include <unordered_map>
 #include <functional>
 #include <cstdint>
+
 #include "packet.hpp"
+
+#include "commands/common.hpp"
 
 class CommandDispatcher
 {
@@ -14,5 +17,5 @@ public:
     static void Dispatch(Packet& packet);
 
 private:
-    static std::unordered_map<uint32_t, HandlerFunc> handlers;
+    static std::unordered_map<Command::ID, HandlerFunc> handlers;
 };

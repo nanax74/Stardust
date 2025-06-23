@@ -5,19 +5,42 @@
 #include <functional>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include <notifications/notifications.h>
 
+#include "packet.hpp"
+
 namespace Command
 {
-    // コマンドIDの定義
-    constexpr uint32_t ID_WriteMemory = 0;
-    constexpr uint32_t ID_SpecificSearch = 1;
+    // コマンドID
+    enum class ID : uint32_t
+    {
+        // メモリ読み書き
+        WriteMemory = 0x0,
+        ReadMemory = 0x1,
+
+        // メモリダンプ
+        DumpMemory = 0x10,
+
+        // メモリサーチ
+        SpecificSearch = 0x20,
+        UnknownSearch = 0x21,
+
+        // ダミー
+        Dummy = 0xFFFFFFFF
+    };
 
     // 応答
-    constexpr uint32_t Response_Success = 0;
-    constexpr uint32_t Response_Failure = 1;
-    constexpr uint32_t Response_Progress = 2;
+    enum class Response : uint32_t
+    {
+        Success = 0x0,
+        Failure = 0x1,
+        Progress = 0x2
+    };
+
+    // ダミーハンドラ
+    void Dummy(Packet& packet);
 }
 
 namespace Memory
@@ -29,4 +52,8 @@ namespace Memory
     void SetProgressCallback(ProgressCallback callback);
 
     extern ProgressCallback progressCallback;
+
+    constexpr size_t KB = 1024;
+    constexpr size_t MB = 1024 * KB;
+    constexpr size_t GB = 1024 * MB;
 }

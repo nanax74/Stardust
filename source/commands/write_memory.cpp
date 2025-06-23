@@ -10,11 +10,11 @@ namespace Command
     void WriteMemory(Packet& packet)
     {
         Packet response(packet.GetContext());
-        response.Write<uint32_t>(ID_WriteMemory);
+        response.Write<uint32_t>(std::to_underlying(ID::WriteMemory));
 
         if (packet.Size() < sizeof(uint32_t) * 2)
         {
-            response.Write<uint32_t>(Response_Failure); // 失敗
+            response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
             response.Send();
             throw std::runtime_error("Packet too small to contain type and address");
         }
@@ -28,7 +28,7 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint8_t))
                 {
-                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
                     response.Send();
                     throw std::runtime_error("Packet too small for uint8_t value");
                 }
@@ -40,7 +40,7 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint16_t))
                 {
-                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
                     response.Send();
                     throw std::runtime_error("Packet too small for uint16_t value");
                 }
@@ -52,7 +52,7 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint32_t))
                 {
-                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
                     response.Send();
                     throw std::runtime_error("Packet too small for uint32_t value");
                 }
@@ -64,7 +64,7 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint64_t))
                 {
-                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
                     response.Send();
                     throw std::runtime_error("Packet too small for uint64_t value");
                 }
@@ -73,13 +73,13 @@ namespace Command
                 break;
             }
             default:
-                response.Write<uint32_t>(Response_Failure); // 失敗
+                response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
                 response.Send();
                 throw std::runtime_error("Unsupported value type");
         }
 
         // 成功応答
-        response.Write<uint32_t>(Response_Success); // 成功
+        response.Write<uint32_t>(std::to_underlying(Response::Success)); // 成功
         response.Send();
     }
 }
