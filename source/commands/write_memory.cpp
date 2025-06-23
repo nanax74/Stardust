@@ -1,4 +1,5 @@
 #include "commands/write_memory.hpp"
+#include "commands/common.hpp"
 
 #include <format>
 
@@ -8,9 +9,13 @@ namespace Command
 {
     void WriteMemory(Packet& packet)
     {
+        Packet response(packet.GetContext());
+        response.Write<uint32_t>(ID_WriteMemory);
+
         if (packet.Size() < sizeof(uint32_t) * 2)
         {
-            packet.SendResponse(std::vector<uint8_t>({0x00})); // 失敗レスポンス
+            response.Write<uint32_t>(Response_Failure); // 失敗
+            response.Send();
             throw std::runtime_error("Packet too small to contain type and address");
         }
 
@@ -23,7 +28,8 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint8_t))
                 {
-                    packet.SendResponse(std::vector<uint8_t>({0x00}));
+                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Send();
                     throw std::runtime_error("Packet too small for uint8_t value");
                 }
                 uint8_t value = packet.Read<uint8_t>();
@@ -34,7 +40,8 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint16_t))
                 {
-                    packet.SendResponse(std::vector<uint8_t>({0x00}));
+                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Send();
                     throw std::runtime_error("Packet too small for uint16_t value");
                 }
                 uint16_t value = packet.Read<uint16_t>();
@@ -45,7 +52,8 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint32_t))
                 {
-                    packet.SendResponse(std::vector<uint8_t>({0x00}));
+                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Send();
                     throw std::runtime_error("Packet too small for uint32_t value");
                 }
                 uint32_t value = packet.Read<uint32_t>();
@@ -56,7 +64,8 @@ namespace Command
             {
                 if (packet.Size() < sizeof(uint64_t))
                 {
-                    packet.SendResponse(std::vector<uint8_t>({0x00}));
+                    response.Write<uint32_t>(Response_Failure); // 失敗
+                    response.Send();
                     throw std::runtime_error("Packet too small for uint64_t value");
                 }
                 uint64_t value = packet.Read<uint64_t>();
@@ -64,10 +73,13 @@ namespace Command
                 break;
             }
             default:
-                packet.SendResponse(std::vector<uint8_t>({0x00}));
+                response.Write<uint32_t>(Response_Failure); // 失敗
+                response.Send();
                 throw std::runtime_error("Unsupported value type");
         }
 
-        packet.SendResponse(std::vector<uint8_t>({0x01})); // 成功レスポンス
+        // 成功応答
+        response.Write<uint32_t>(Response_Success); // 成功
+        response.Send();
     }
 }

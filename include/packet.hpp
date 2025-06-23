@@ -4,14 +4,17 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <type_traits>
+
+#include "socket_context.hpp"
 
 class Packet
 {
 public:
-    Packet();
-    Packet(const std::vector<uint8_t>& data, int socket = -1);
+    Packet(std::shared_ptr<SocketContext> ctx = nullptr);
+    Packet(const std::vector<uint8_t>& data, std::shared_ptr<SocketContext> ctx = nullptr);
 
     template <typename T>
     void Write(const T& value);
@@ -27,14 +30,13 @@ public:
     size_t Size();
 
     int GetSocket() const;
-    void SetSocket(int s);
-
-    void SendResponse(const std::vector<uint8_t>& response) const;
+    std::shared_ptr<SocketContext> GetContext() const;
+    void Send() const;
 
 private:
     std::vector<uint8_t> buffer;
     size_t cursor = 0;
-    int socket = -1;
+    std::shared_ptr<SocketContext> ctx;
 };
 
 // テンプレート関数の実装はヘッダー末尾に

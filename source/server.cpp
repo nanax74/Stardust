@@ -32,7 +32,7 @@ Server::Server()
 {
     // 変数の初期化
     serverSocket = SOCKET_NULL;
-    clientSockets.clear();
+    clientContexts.clear();
     ipAddress = IP_ADDRESS_NULL;
 
     try
@@ -203,16 +203,18 @@ void Server::NotificationIPAddress()
 
 void Server::CloseClientSocket()
 {
-    std::lock_guard<std::mutex> lock(clientSocketsMutex); // マルチスレッド安全対策
-    for(int socket : clientSockets)
+    std::lock_guard<std::mutex> lock(clientContextsMutex);
+
+    for (auto& ctx : clientContexts)
     {
-        if(socket != SOCKET_NULL)
+        if (ctx && ctx->connected.exchange(false))
         {
-            shutdown(socket, SHUT_RDWR);
-            close(socket);
+            shutdown(ctx->socket, SHUT_RDWR);
+            close(ctx->socket);
         }
     }
-    clientSockets.clear(); // 完全に消去
+
+    clientContexts.clear(); // 全クライアントを消去
 }
 
 void Server::CloseServerSocket()
@@ -225,20 +227,39 @@ void Server::CloseServerSocket()
     }
 }
 
+bool Server::SendToClient(std::shared_ptr<SocketContext> client, const std::vector<uint8_t>& data)
+{
+    if (!client || !client->connected) return false;
+
+    std::lock_guard<std::mutex> lock(client->sendMutex);
+    ssize_t sent = send(client->socket, data.data(), data.size(), 0);
+
+    return sent == (ssize_t)data.size();
+}
+
+void Server::Broadcast(const std::vector<uint8_t>& data)
+{
+    std::lock_guard<std::mutex> lock(clientContextsMutex);
+    for (auto& ctx : clientContexts)
+    {
+        SendToClient(ctx, data);
+    }
+}
+
 // クライアントの接続待機
 void Server::AcceptThread::Main(std::stop_token token, Server* server)
 {
     NotificationModule_AddInfoNotification("Waiting for client to connect");
 
-    while(!token.stop_requested())
+    while (!token.stop_requested())
     {
         sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
         int clientSock = accept(server->serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
 
-        if(clientSock < 0)
+        if (clientSock < 0)
         {
-            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
@@ -248,9 +269,14 @@ void Server::AcceptThread::Main(std::stop_token token, Server* server)
             continue;
         }
 
+        auto clientContext = std::make_shared<SocketContext>();
+        clientContext->socket = clientSock;
+        clientContext->connected = true;
+        clientContext->address = clientAddr;
+
         {
-            std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
-            server->clientSockets.push_back(clientSock);
+            std::lock_guard<std::mutex> lock(server->clientContextsMutex);
+            server->clientContexts.push_back(clientContext);
         }
 
         char ipStr[INET_ADDRSTRLEN];
@@ -278,15 +304,20 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
     while (!token.stop_requested())
     {
         std::vector<struct pollfd> pollfds;
+        std::vector<std::shared_ptr<SocketContext>> contexts;
+
         {
-            std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
-            for (int sock : server->clientSockets)
+            std::lock_guard<std::mutex> lock(server->clientContextsMutex);
+            for (const auto& ctx : server->clientContexts)
             {
+                if (!ctx->connected) continue;
+
                 struct pollfd pfd;
-                pfd.fd = sock;
-                pfd.events = POLLIN; // 読み込み可能なイベント
+                pfd.fd = ctx->socket;
+                pfd.events = POLLIN;
                 pfd.revents = 0;
                 pollfds.push_back(pfd);
+                contexts.push_back(ctx);
             }
         }
 
@@ -296,7 +327,7 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
             continue;
         }
 
-        int ret = poll(pollfds.data(), pollfds.size(), 100); // タイムアウト100ms
+        int ret = poll(pollfds.data(), pollfds.size(), 100);
         if (ret < 0)
         {
             NotificationModule_AddErrorNotification("poll failed");
@@ -304,52 +335,55 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
         }
         else if (ret == 0)
         {
-            continue; // タイムアウト：何もせず続行
+            continue;
         }
 
-        std::lock_guard<std::mutex> lock(server->clientSocketsMutex);
         for (size_t i = 0; i < pollfds.size(); ++i)
         {
             if (pollfds[i].revents & POLLIN)
             {
-                int clientSock = pollfds[i].fd;
+                auto ctx = contexts[i];
+                std::lock_guard<std::mutex> recvLock(ctx->recvMutex);
 
-                ssize_t received = recv(clientSock, buffer.data(), buffer.size(), 0);
+                ssize_t received = recv(ctx->socket, buffer.data(), buffer.size(), 0);
 
                 if (received == 0)
                 {
-                    std::string msg = std::format("Client disconnected: Socket {}", clientSock);
+                    std::string msg = std::format("Client disconnected: Socket {}", ctx->socket);
                     NotificationModule_AddInfoNotification(msg.c_str());
-                    shutdown(clientSock, SHUT_RDWR);
-                    close(clientSock);
-                    server->clientSockets.erase(std::remove(
-                        server->clientSockets.begin(),
-                        server->clientSockets.end(),
-                        clientSock
-                    ), server->clientSockets.end());
+                    shutdown(ctx->socket, SHUT_RDWR);
+                    close(ctx->socket);
+                    ctx->connected = false;
                 }
                 else if (received < 0)
                 {
-                    std::string msg = std::format("Recv error on socket {}: errno {}", clientSock, errno);
+                    std::string msg = std::format("Recv error on socket {}: errno {}", ctx->socket, errno);
                     NotificationModule_AddErrorNotification(msg.c_str());
-                    shutdown(clientSock, SHUT_RDWR);
-                    close(clientSock);
-                    server->clientSockets.erase(std::remove(
-                        server->clientSockets.begin(),
-                        server->clientSockets.end(),
-                        clientSock
-                    ), server->clientSockets.end());
+                    shutdown(ctx->socket, SHUT_RDWR);
+                    close(ctx->socket);
+                    ctx->connected = false;
                 }
                 else
                 {
                     std::vector<uint8_t> packet(buffer.begin(), buffer.begin() + received);
                     {
                         std::lock_guard<std::mutex> queueLock(server->queueMutex);
-                        server->receiveQueue.push(std::make_pair(clientSock, std::move(packet)));
+                        server->receiveQueue.push(std::make_pair(ctx, std::move(packet)));
                     }
                     server->queueCondVar.notify_one();
                 }
             }
+        }
+
+        // 無効なクライアントを削除
+        {
+            std::lock_guard<std::mutex> lock(server->clientContextsMutex);
+            auto& vec = server->clientContexts;
+            vec.erase(std::remove_if(vec.begin(), vec.end(),
+                [](const std::shared_ptr<SocketContext>& ctx)
+                {
+                    return !ctx->connected;
+                }), vec.end());
         }
     }
 }
@@ -381,14 +415,14 @@ void Server::ProcessThread::Main(std::stop_token token, Server* server)
         }
 
         // キューからデータを取り出す
-        auto [clientSock, data] = std::move(server->receiveQueue.front());
+        auto [ctx, data] = std::move(server->receiveQueue.front());
         server->receiveQueue.pop();
         lock.unlock();  // 早めにロックを解放
 
         // 実際のデータ処理
         try
         {
-            Packet packet(data, clientSock);
+            Packet packet(data, ctx);
             CommandDispatcher::Dispatch(packet);
         }
         catch (const std::exception& e)

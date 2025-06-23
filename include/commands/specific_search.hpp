@@ -19,38 +19,43 @@ namespace Command
 namespace Memory
 {
     template <typename T>
-    void Search(uint32_t start, uint32_t end, const T& value)
+    void Search(uint32_t start, uint32_t size, const T& value, uint32_t alignment = alignof(T))
     {
         static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
 
         std::filesystem::create_directories(Memory::STARDUST_PATH / "Search");
-
         std::ofstream ofs(Memory::STARDUST_PATH / "Search" / "results.bin", std::ios::binary);
         if (!ofs)
         {
             NotificationModule_AddErrorNotification("Failed to open output file");
             return;
         }
-
-        uint32_t total = end - start;
-        float lastProgressReported = -1.0f;  // -1で初期化し、必ず最初の進捗は報告されるように
-
-        for (uint32_t address = start; address < end; address += sizeof(T))
+    
+        float lastProgressReported = -1.0f;
+        uint32_t end = start + size;
+    
+        for (uint32_t address = start; address < end; address += alignment)
         {
-            T* ptr = reinterpret_cast<T*>(address);
-            float progress = total > 0 ? static_cast<float>(address - start) / total : 0.0f;
-
-            if (*ptr == value)
+            // アラインメントはこの段階で担保されている
+            T temp;
+            std::memcpy(&temp, reinterpret_cast<const void*>(address), sizeof(T));
+        
+            if (temp == value)
             {
                 ofs.write(reinterpret_cast<const char*>(&address), sizeof(address));
             }
-
-            // 1% (0.01) 以上進捗が進んだらコールバック呼び出し
+        
+            float progress = static_cast<float>(address - start) / size;
             if (progressCallback && progress - lastProgressReported >= 0.01f)
             {
-                progressCallback(address, progress);
+                progressCallback(progress);
                 lastProgressReported = progress;
             }
+        }
+    
+        if (progressCallback && lastProgressReported < 1.0f)
+        {
+            progressCallback(1.0f);
         }
     }
 }

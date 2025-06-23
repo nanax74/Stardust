@@ -4,6 +4,7 @@
 #include <thread>
 #include <notifications/notifications.h>
 
+#include "commands/common.hpp"
 #include "commands/write_memory.hpp"
 #include "commands/specific_search.hpp"
 
@@ -12,10 +13,10 @@ std::unordered_map<uint32_t, CommandDispatcher::HandlerFunc> CommandDispatcher::
 void CommandDispatcher::RegisterHandlers()
 {
     // メモリ書き込み
-    handlers[1] = Command::WriteMemory;
+    handlers[Command::ID_WriteMemory] = Command::WriteMemory;
 
     // メモリ検索
-    handlers[2] = Command::SpecificSearch;
+    handlers[Command::ID_SpecificSearch] = Command::SpecificSearch;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)

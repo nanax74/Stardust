@@ -2,14 +2,19 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <memory>
+#include <stdexcept>
 #include <type_traits>
 
 #include <sys/socket.h>
 
+#include "socket_context.hpp"
 
-Packet::Packet() : buffer(), cursor(0), socket(-1) {}
+Packet::Packet(std::shared_ptr<SocketContext> ctx)
+    : ctx(ctx) {}
 
-Packet::Packet(const std::vector<uint8_t>& data, int socket) : buffer(data), cursor(0), socket(socket) {}
+Packet::Packet(const std::vector<uint8_t>& data, std::shared_ptr<SocketContext> ctx)
+    : buffer(data), ctx(ctx) {}
 
 void Packet::WriteString(const std::string& str)
 {
@@ -46,26 +51,32 @@ size_t Packet::Size()
 
 int Packet::GetSocket() const
 {
-    return socket;
+    return ctx ? ctx->socket : -1;
 }
 
-void Packet::SetSocket(int s)
+std::shared_ptr<SocketContext> Packet::GetContext() const
 {
-    socket = s;
+    return ctx;
 }
 
-void Packet::SendResponse(const std::vector<uint8_t>& response) const
+void Packet::Send() const
 {
-    if (socket != -1)
+    if (!ctx || !ctx->connected)
     {
-        ssize_t sent = send(socket, response.data(), response.size(), 0);
-        if (sent < 0)
-        {
-            std::runtime_error("Failed to send response: " + std::string(strerror(errno)));
-        }
+        throw std::runtime_error("No valid socket context for sending response");
     }
-    else
+
+    std::lock_guard<std::mutex> lock(ctx->sendMutex);
+
+    ssize_t sent = send(ctx->socket, buffer.data(), buffer.size(), 0);
+    if (sent < 0)
     {
-        throw std::runtime_error("No socket set for sending response");
+        throw std::runtime_error("Failed to send response: " + std::string(strerror(errno)));
+    }
+
+    if ((size_t)sent != buffer.size())
+    {
+        // 送信できなかった分がある場合の処理（例: 再送要求など）
+        throw std::runtime_error("Partial send occurred");
     }
 }

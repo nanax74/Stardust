@@ -1,4 +1,5 @@
-#include "main.hpp"
+// std
+#include <cstdint>
 
 // wums
 #include <notifications/notifications.h>

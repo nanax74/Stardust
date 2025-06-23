@@ -11,6 +11,9 @@
 // wut
 #include <arpa/inet.h>
 
+// stardust
+#include "socket_context.hpp"
+
 class Server
 {
 public:
@@ -24,8 +27,8 @@ private:
     uint16_t port = 50000;
     uint32_t ipAddress;
     int serverSocket;
-    std::mutex clientSocketsMutex;  // clientSocketsへのアクセスを保護するミューテックス
-    std::vector<int> clientSockets;
+    std::vector<std::shared_ptr<SocketContext>> clientContexts;
+    std::mutex clientContextsMutex;
 
     Server();
 
@@ -54,6 +57,10 @@ private:
     void CloseClientSocket();
     void CloseServerSocket();
 
+    // クライアントへのデータ送信
+    bool SendToClient(std::shared_ptr<SocketContext> client, const std::vector<uint8_t>& data);
+    void Broadcast(const std::vector<uint8_t>& data);
+
     class AcceptThread
     {
     public:
@@ -73,7 +80,7 @@ private:
     };
 
     ReceiveThread receiveThread;
-    std::queue<std::pair<int, std::vector<uint8_t>>> receiveQueue;
+    std::queue<std::pair<std::shared_ptr<SocketContext>, std::vector<uint8_t>>> receiveQueue;
     std::mutex queueMutex;
     std::condition_variable queueCondVar;
 

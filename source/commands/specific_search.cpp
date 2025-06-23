@@ -9,19 +9,22 @@ namespace Command
     void SpecificSearch(Packet& packet)
     {
         // 例: 進捗を受け取るラムダ関数を登録
-        Memory::SetProgressCallback([](uint32_t addr, float progress)
+        Memory::SetProgressCallback([packet](float progress)
         {
-            // 進捗を何かに送信する、ログに出すなど
-            std::string msg = std::format("Progress: 0x{:08X} ({:.2f}%)\n", addr, progress * 100.0f);
-            NotificationModule_AddInfoNotification(msg.c_str());
+            Packet response(packet.GetContext());
+            response.Write<uint32_t>(Command::ID_SpecificSearch);
+            response.Write<uint32_t>(Command::Response_Progress);
+            response.Write<float>(progress);
+            response.Send();
         });
 
-        // packet から検索範囲や値を取得する例
+        // packet から検索範囲や値を取得
         uint32_t start = packet.Read<uint32_t>();
-        uint32_t end = packet.Read<uint32_t>();
+        uint32_t size = packet.Read<uint32_t>();
         int value = packet.Read<int>();
 
-        Memory::Search(start, end, value);
+        // サーチを実行
+        Memory::Search(start, size, value);
 
         // 検索終了後にコールバックをクリア
         Memory::SetProgressCallback(nullptr);
