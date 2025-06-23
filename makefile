@@ -22,7 +22,10 @@ SOURCES := $(shell find $(ROOT_SOURCE) -type d)
 SOURCES := $(foreach source,$(SOURCES),$(source:$(TOPDIR)/%=%)/)
 
 DATA        := data
-INCLUDES    := include
+
+ROOT_INCLUDE := $(TOPDIR)/include
+INCLUDES := $(shell find $(ROOT_INCLUDE) -type d)
+INCLUDES := $(foreach include,$(INCLUDES),$(include:$(TOPDIR)/%=%)/)
 
 #===============================================================================
 # コンパイルオプション

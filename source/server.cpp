@@ -13,6 +13,7 @@
 #include <unistd.h> // close関数に必要
 
 // stardust
+#include "command_dispatcher.hpp"
 #include "server.hpp"
 
 std::unique_ptr<Server> gServer = nullptr;
@@ -46,6 +47,9 @@ Server::Server()
         BindSocket(serverInfo);
         ListenSocket();
         NotificationIPAddress();
+
+        CommandDispatcher::RegisterHandlers(); // コマンドハンドラの登録
+
         initialized = true;
     }
     catch(const std::exception& e)
@@ -381,28 +385,16 @@ void Server::ProcessThread::Main(std::stop_token token, Server* server)
         server->receiveQueue.pop();
         lock.unlock();  // 早めにロックを解放
 
-        // 実際のデータ処理（ここを書き換えて独自処理に）
-        std::string hex;
-        for (uint8_t byte : data)
+        // 実際のデータ処理
+        try
         {
-            hex += std::format("{:02X} ", byte);
+            Packet packet(data);
+            CommandDispatcher::Dispatch(packet);
         }
-
-        std::string msg = std::format("Received {} bytes: {}", data.size(), hex);
-        NotificationModule_AddInfoNotification(msg.c_str());
-
+        catch (const std::exception& e)
         {
-            std::lock_guard<std::mutex> clientLock(server->clientSocketsMutex);
-            std::string reply = "受信しました: " + std::to_string(data.size()) + " bytes\n";
-            for (int clientSock : server->clientSockets)
-            {
-                ssize_t sent = send(clientSock, reply.c_str(), reply.size(), MSG_DONTWAIT);
-                if (sent < 0)
-                {
-                    std::string err = std::format("送信失敗: socket={}, errno={}", clientSock, errno);
-                    NotificationModule_AddErrorNotification(err.c_str());
-                }
-            }
+            std::string msg = std::format("Processing error: {}", e.what());
+            NotificationModule_AddErrorNotification(msg.c_str());
         }
 
         // 処理負荷軽減のため適宜スリープも検討（必要なら）

@@ -11,7 +11,7 @@
 #include <whb/log_udp.h>
 
 // stardust
-#include "exception/callback.hpp"
+#include "exception.hpp"
 #include "server.hpp"
 
 WUPS_PLUGIN_NAME("Stardust");
@@ -39,4 +39,8 @@ ON_APPLICATION_START()
 ON_APPLICATION_REQUESTS_EXIT()
 {
     WHBLogUdpDeinit();
+    if (gServer)
+    {
+        gServer.reset();
+    }
 }
