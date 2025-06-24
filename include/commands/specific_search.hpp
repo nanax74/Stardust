@@ -46,16 +46,16 @@ namespace Memory
             }
         
             float progress = static_cast<float>(address - start) / size;
-            if (progressCallback && progress - lastProgressReported >= 0.01f)
+            if (g_ReportProgress && progress - lastProgressReported >= 0.01f)
             {
-                progressCallback(progress);
+                g_ReportProgress(progress);
                 lastProgressReported = progress;
             }
         }
     
-        if (progressCallback && lastProgressReported < 1.0f)
+        if (g_ReportProgress && lastProgressReported < 1.0f)
         {
-            progressCallback(1.0f);
+            g_ReportProgress(1.0f);
         }
     }
 }

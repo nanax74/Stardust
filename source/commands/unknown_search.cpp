@@ -6,7 +6,6 @@ namespace Command
 {
     void UnknownSearch(Packet& packet)
     {
-        /*
         // プログレス通知の設定
         Memory::SetProgressCallback([packet](float progress)
         {
@@ -19,6 +18,8 @@ namespace Command
 
         // パラメータの読み取り
         Comparison comp = static_cast<Comparison>(packet.Read<uint32_t>());
+        ValueType valueType = static_cast<ValueType>(packet.Read<uint32_t>());
+        uint32_t alignment = packet.Read<uint32_t>();
 
         switch (valueType)
         {
@@ -49,9 +50,8 @@ namespace Command
             default:
                 throw std::runtime_error("Unknown value type");
         }
-        
+
         // プログレス通知解除
         Memory::SetProgressCallback(nullptr);
-        */
     }
 }

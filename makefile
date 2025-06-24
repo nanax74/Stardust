@@ -14,8 +14,6 @@ WUT_ROOT   := $(DEVKITPRO)/wut
 WUPS_ROOT  := $(DEVKITPRO)/wups
 WUMS_ROOT  := $(DEVKITPRO)/wums
 
-LZ4_ROOT   :=  $(DEVKITPPC)/liblz4
-
 TARGET      := Stardust
 BUILD       := build
 
@@ -38,10 +36,10 @@ CXXFLAGS   := $(CFLAGS) -std=c++23
 ASFLAGS    := -g $(ARCH) -mregnames
 LDFLAGS    := -g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS)
 
-LIBS       := -lwups -lwut -lnotifications -llz4
+LIBS       := -lwups -lwut -lnotifications
 
 # ライブラリのルートディレクトリ
-LIBDIRS    := $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT) $(LZ4_ROOT)
+LIBDIRS    := $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT)
 
 #===============================================================================
 # ビルドルール（BUILDディレクトリでビルド実行）

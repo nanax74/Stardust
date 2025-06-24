@@ -18,6 +18,4 @@ namespace Command
 namespace Memory
 {
     void Dump(uint32_t start, uint32_t size, Command::ValueType valueType, bool compress);
-    void Dump_SaveMetadata(uint32_t start, uint32_t size, Command::ValueType valueType, bool compressed);
-    void Dump_LoadMetadata(uint32_t& outStart, uint32_t& outSize, Command::ValueType& outValueType, bool& outCompressed);
 }

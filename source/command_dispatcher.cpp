@@ -27,7 +27,7 @@ void CommandDispatcher::RegisterHandlers()
     handlers[Command::ID::SpecificSearch] = Command::Dummy;
 
     // 未知の値検索
-    handlers[Command::ID::UnknownSearch] = Command::Dummy;
+    handlers[Command::ID::UnknownSearch] = Command::UnknownSearch;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)
