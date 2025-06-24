@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "C:/devkitPro/wums/include",
                 "C:/devkitPro/wups/include",
-                "C:/devkitPro/wut/include"
+                "C:/devkitPro/wut/include",
+                "C:/devkitPro/devkitPPC/liblz4/include"
             ],
             "defines": [
                 "GEKKO",

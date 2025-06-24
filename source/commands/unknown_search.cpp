@@ -7,7 +7,7 @@ namespace Command
     void UnknownSearch(Packet& packet)
     {
         /*
-        // 例: 進捗を受け取るラムダ関数を登録
+        // プログレス通知の設定
         Memory::SetProgressCallback([packet](float progress)
         {
             Packet response(packet.GetContext());
@@ -17,19 +17,40 @@ namespace Command
             response.Send();
         });
 
-        // packet から検索範囲や値を取得
-        uint32_t start = packet.Read<uint32_t>();
-        uint32_t size = packet.Read<uint32_t>();
-        uint32_t comparison = packet.Read<uint32_t>();
-        uint32_t alignment = packet.Read<uint32_t>();
-        uint32_t valueType = packet.Read<uint32_t>();
+        // パラメータの読み取り
+        Comparison comp = static_cast<Comparison>(packet.Read<uint32_t>());
+
+        switch (valueType)
+        {
+            case ValueType::Int8:
+                Memory::UnknownSearch<int8_t>(comp, alignment, packet.Read<int8_t>());
+                break;
+            case ValueType::UInt8:
+                Memory::UnknownSearch<uint8_t>(comp, alignment, packet.Read<uint8_t>());
+                break;
+            case ValueType::Int16:
+                Memory::UnknownSearch<int16_t>(comp, alignment, packet.Read<int16_t>());
+                break;
+            case ValueType::UInt16:
+                Memory::UnknownSearch<uint16_t>(comp, alignment, packet.Read<uint16_t>());
+                break;
+            case ValueType::Int32:
+                Memory::UnknownSearch<int32_t>(comp, alignment, packet.Read<int32_t>());
+                break;
+            case ValueType::UInt32:
+                Memory::UnknownSearch<uint32_t>(comp, alignment, packet.Read<uint32_t>());
+                break;
+            case ValueType::Int64:
+                Memory::UnknownSearch<int64_t>(comp, alignment, packet.Read<int64_t>());
+                break;
+            case ValueType::UInt64:
+                Memory::UnknownSearch<uint64_t>(comp, alignment, packet.Read<uint64_t>());
+                break;
+            default:
+                throw std::runtime_error("Unknown value type");
+        }
         
-        int value = packet.Read<int>();
-
-        // サーチを実行
-        Memory::Search(start, size, value);
-
-        // 検索終了後にコールバックをクリア
+        // プログレス通知解除
         Memory::SetProgressCallback(nullptr);
         */
     }

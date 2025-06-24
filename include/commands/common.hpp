@@ -39,6 +39,35 @@ namespace Command
         Progress = 0x2
     };
 
+    enum class Comparison : uint32_t
+    {
+        Equal = 0,         // ==
+        NotEqual = 1,      // !=
+        LessThan = 2,      // <
+        LessOrEqual = 3,   // <=
+        GreaterThan = 4,   // >
+        GreaterOrEqual = 5 // >=
+    };
+
+    enum class ValueType : uint32_t
+    {
+        Int8   = 0,
+        UInt8  = 1,
+        Int16  = 2,
+        UInt16 = 3,
+        Int32  = 4,
+        UInt32 = 5,
+        Int64  = 6,
+        UInt64 = 7
+    };
+
+    // 値のサイズを取得
+    size_t GetValueSize(Command::ValueType type);
+
+    // ValueTypeと文字列の変換関数
+    std::string ValueTypeToString(Command::ValueType vt);
+    bool StringToValueType(const std::string& str, Command::ValueType& outValueType);
+
     // ダミーハンドラ
     void Dummy(Packet& packet);
 }
@@ -56,4 +85,7 @@ namespace Memory
     constexpr size_t KB = 1024;
     constexpr size_t MB = 1024 * KB;
     constexpr size_t GB = 1024 * MB;
+
+    constexpr size_t THRESHOLD = 1 * MB;
+    constexpr size_t BLOCK_SIZE = 1 * MB;
 }

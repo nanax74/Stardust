@@ -23,7 +23,7 @@ namespace Exception
     // クラッシュ処理
     void Panic(string exceptionType, OSContext* context)
     {
-        string message = format("{0} Exception occurred from 0x{1:08X} in 0x{2:08X}", exceptionType, context->srr0, context->srr1);
+        string message = format("{0} Exception occurred from 0x{1:08X} in 0x{2:08X}", exceptionType, context->srr0, context->dar);
         OSFatal(message.c_str());
     }
 
