@@ -92,16 +92,24 @@ namespace Memory
                 {
                     if (compress)
                     {
-                        auto compressedValues = CompressValues(valueBuffer.data(), valueBuffer.size(), GetTypeSize(valueType));
-                        valueFile.write(reinterpret_cast<const char*>(compressedValues.data()), compressedValues.size());
+                        std::jthread valueThread([&] {
+                            auto compressedValues = CompressValues(valueBuffer.data(), valueBuffer.size(), GetTypeSize(valueType));
+                            valueFile.write(reinterpret_cast<const char*>(compressedValues.data()), compressedValues.size());
+                        });
 
-                        auto compressedAddresses = CompressAddresses(addressBuffer);
-                        addressFile.write(reinterpret_cast<const char*>(compressedAddresses.data()), compressedAddresses.size());
+                        std::jthread addressThread([&] {
+                            auto compressedAddresses = CompressAddresses(addressBuffer);
+                            addressFile.write(reinterpret_cast<const char*>(compressedAddresses.data()), compressedAddresses.size());
+                        });
                     }
                     else
                     {
-                        valueFile.write(reinterpret_cast<const char*>(valueBuffer.data()), valueBuffer.size());
-                        addressFile.write(reinterpret_cast<const char*>(addressBuffer.data()), addressBuffer.size() * sizeof(uint32_t));
+                        std::jthread valueThread([&] {
+                            valueFile.write(reinterpret_cast<const char*>(valueBuffer.data()), valueBuffer.size());
+                        });
+                        std::jthread addressThread([&] {
+                            addressFile.write(reinterpret_cast<const char*>(addressBuffer.data()), addressBuffer.size() * sizeof(uint32_t));
+                        });
                     }
 
                     valueBuffer.clear();
