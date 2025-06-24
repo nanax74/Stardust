@@ -18,4 +18,6 @@ namespace Command
 namespace Memory
 {
     void Dump(uint32_t start, uint32_t size);
+    bool Dump_SaveMetadata(uint32_t start, uint32_t size);
+    bool Dump_LoadMetadata(uint32_t& outStart, uint32_t& outSize);
 }

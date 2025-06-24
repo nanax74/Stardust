@@ -8,8 +8,11 @@
 struct SocketContext
 {
     int socket;
-    std::mutex sendMutex;
-    std::mutex recvMutex;
     std::atomic<bool> connected = true;
     sockaddr_in address;
+
+    std::mutex sendMutex;
+    std::mutex recvMutex;
+
+    std::vector<uint8_t> recvBuffer;
 };

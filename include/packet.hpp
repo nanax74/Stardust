@@ -31,6 +31,7 @@ public:
 
     int GetSocket() const;
     std::shared_ptr<SocketContext> GetContext() const;
+    static std::vector<Packet> ReceivePackets(std::vector<uint8_t>& buffer, std::shared_ptr<SocketContext> ctx);
     void Send() const;
 
 private:

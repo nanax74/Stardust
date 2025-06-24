@@ -95,11 +95,11 @@ Server::Server()
 
 Server::~Server()
 {
-    CloseClientSocket();
-    CloseServerSocket();
     acceptThread.Stop();
     receiveThread.Stop();
     processThread.Stop();
+    CloseClientSocket();
+    CloseServerSocket();
     nn::ac::Finalize();
 }
 
@@ -365,12 +365,18 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
                 }
                 else
                 {
-                    std::vector<uint8_t> packet(buffer.begin(), buffer.begin() + received);
+                    ctx->recvBuffer.insert(ctx->recvBuffer.end(), buffer.begin(), buffer.begin() + received);
+                
+                    auto packets = Packet::ReceivePackets(ctx->recvBuffer, ctx);
                     {
                         std::lock_guard<std::mutex> queueLock(server->queueMutex);
-                        server->receiveQueue.push(std::make_pair(ctx, std::move(packet)));
+                        for (auto& pkt : packets)
+                        {
+                            server->receiveQueue.push(std::make_pair(ctx, pkt.GetData())); // or push(pkt)
+                        }
                     }
-                    server->queueCondVar.notify_one();
+                    if (!packets.empty())
+                        server->queueCondVar.notify_one();
                 }
             }
         }
