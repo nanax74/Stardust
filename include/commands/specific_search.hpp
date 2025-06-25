@@ -21,6 +21,7 @@ namespace Memory
     template <typename T>
     void Search(uint32_t start, uint32_t size, const T& value, uint32_t alignment = alignof(T))
     {
+        
         static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
 
         std::filesystem::create_directories(Memory::STARDUST_PATH / "Search");

@@ -60,15 +60,33 @@ namespace Command
         Int64  = 6,
         UInt64 = 7,
         Float  = 8,
-        Double = 9
+        Double = 9,
+        Unknown = 10
     };
+
+    // 型からValueTypeクラスを取得
+    template <typename T>
+    ValueType GetValueType()
+    {
+        if constexpr(std::is_same_v<T, int8_t>) return ValueType::Int8;
+        else if constexpr(std::is_same_v<T, uint8_t>) return ValueType::UInt8;
+        else if constexpr(std::is_same_v<T, int16_t>) return ValueType::Int16;
+        else if constexpr(std::is_same_v<T, uint16_t>) return ValueType::UInt16;
+        else if constexpr(std::is_same_v<T, int32_t>) return ValueType::Int32;
+        else if constexpr(std::is_same_v<T, uint32_t>) return ValueType::UInt32;
+        else if constexpr(std::is_same_v<T, int64_t>) return ValueType::Int64;
+        else if constexpr(std::is_same_v<T, uint64_t>) return ValueType::UInt64;
+        else if constexpr(std::is_same_v<T, float>) return ValueType::Float;
+        else if constexpr(std::is_same_v<T, double>) return ValueType::Double;
+        else static_assert(sizeof(T) == 0, "Unsupported type for GetValueType");
+    }
 
     // 値のサイズを取得
     size_t GetTypeSize(Command::ValueType type);
 
     // ValueTypeと文字列の変換関数
     std::string ValueTypeToString(Command::ValueType vt);
-    bool StringToValueType(const std::string& str, Command::ValueType& outValueType);
+    Command::ValueType StringToValueType(const std::string& str);
 
     // ダミーハンドラ
     void Dummy(Packet& packet);
@@ -92,23 +110,21 @@ namespace Memory
     constexpr size_t BLOCK_SIZE = 1 * MB;
 
     // メタデータを保存
-    bool Search_SaveMeta(uint32_t startAddress, uint32_t dumpSize, Command::ValueType valueType, bool compress);
+    bool Search_SaveMeta(uint32_t startAddress, uint32_t endAddress, Command::ValueType valueType);
 
     // メタデータを読み込み
-    bool Search_LoadMeta(uint32_t& startAddress, uint32_t& dumpSize, Command::ValueType& valueType, bool& compress);
+    bool Search_LoadMeta(uint32_t& startAddress, uint32_t& endAddress, Command::ValueType& valueType);
 
-    using ValueCallback = std::function<void(const uint8_t* value)>;
-    using AddressCallback = std::function<void(uint32_t address)>;
+    // アラインメント修正
+    template <typename T>
+    T AlignDown(T value, size_t alignment)
+    {
+        return value & ~(alignment - 1);
+    }
 
-    // 一括処理（圧縮データは返り値で返す）
-    std::vector<uint8_t> CompressValues(const uint8_t* raw, size_t rawSize, size_t valueSize);
-
-    // ストリーミング処理（解凍データはコールバックで渡す）
-    void DecompressValues(const uint8_t* compressed, size_t compressedSize, size_t valueSize, ValueCallback onDecompress);
-
-    // 一括処理（圧縮データは返り値で返す）
-    std::vector<uint8_t> CompressAddresses(const std::vector<uint32_t>& addresses);
-
-    // ストリーミング処理（解凍データはコールバックで渡す）
-    void DecompressAddresses(const uint8_t* compressed, size_t compressedSize, AddressCallback onAddress);
+    template <typename T>
+    T AlignUp(T value, size_t alignment)
+    {
+        return (value + (alignment - 1)) & ~(alignment - 1);
+    }
 }

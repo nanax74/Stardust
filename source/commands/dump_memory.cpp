@@ -24,123 +24,31 @@ namespace Command
             response.Send();
         });
 
-        uint32_t start = packet.Read<uint32_t>();
-        uint32_t size = packet.Read<uint32_t>();
-        ValueType valType = static_cast<ValueType>(packet.Read<uint32_t>());
-        bool comp = packet.Read<uint32_t>() != 0;
+        uint32_t startAddress = packet.Read<uint32_t>();
+        uint32_t endAddress = packet.Read<uint32_t>();
+        ValueType valueType = static_cast<ValueType>(packet.Read<uint32_t>());
 
-        Memory::Dump(start, size, valType, comp);
-
-        Memory::SetProgressCallback(nullptr);
-    }
-}
-
-namespace Memory
-{
-    namespace fs = std::filesystem;
-
-    void Dump(uint32_t startAddress, uint32_t dumpSize, Command::ValueType valueType, bool compress)
-    {
-        fs::create_directories(fs::path(STARDUST_PATH) / "Search");
-
-        std::ofstream valueFile((fs::path(STARDUST_PATH) / "Search" / "Value.bin").string(), std::ios::binary);
-        std::ofstream addressFile((fs::path(STARDUST_PATH) / "Search" / "Address.bin").string(), std::ios::binary);
-
-        std::vector<uint8_t> valueBuffer;
-        std::vector<uint32_t> addressBuffer;
-
-        auto lastReport = std::chrono::steady_clock::now();
-
-        uint64_t endAddress = static_cast<uint64_t>(startAddress) + dumpSize;
-        for (uint32_t addr = startAddress; static_cast<uint64_t>(addr) < endAddress;)
+        switch(valueType)
         {
-            uint32_t blockStart = addr;
-            uint32_t blockEnd = std::min(addr + BLOCK_SIZE, startAddress + dumpSize);
-
-            if (!OSIsAddressValid(blockStart) || !OSIsAddressValid(blockEnd - 1))
-            {
-                addr = blockEnd;
-                continue;
-            }
-
-            for (; addr < blockEnd; )
-            {
-                if (!OSIsAddressValid(addr))
-                {
-                    ++addr;
-                    continue;
-                }
-
-                size_t typeSize = GetTypeSize(valueType);
-
-                uint8_t buffer[8] = {};
-                memcpy(buffer, reinterpret_cast<void*>(addr), typeSize);
-
-                valueBuffer.insert(valueBuffer.end(), buffer, buffer + typeSize);
-                addressBuffer.push_back(addr);
-                addr += typeSize;
-
-                auto now = std::chrono::steady_clock::now();
-                if (now - lastReport >= std::chrono::milliseconds(100))
-                {
-                    float progress = static_cast<float>(addr - startAddress) / dumpSize;
-                    if (g_ReportProgress) g_ReportProgress(progress);
-                    lastReport = now;
-                }
-
-                if (valueBuffer.size() >= THRESHOLD)
-                {
-                    if (compress)
-                    {
-                        auto compressedValues = CompressValues(valueBuffer.data(), valueBuffer.size(), GetTypeSize(valueType));
-                        valueFile.write(reinterpret_cast<const char*>(compressedValues.data()), compressedValues.size());
-                    }
-                    else
-                    {
-                        valueFile.write(reinterpret_cast<const char*>(valueBuffer.data()), valueBuffer.size());
-                    }
-
-                    valueBuffer.clear();
-                }
-
-                if (addressBuffer.size() >= THRESHOLD / sizeof(uint32_t))
-                {
-                    if(compress)
-                    {
-                        auto compressedAddresses = CompressAddresses(addressBuffer);
-                        addressFile.write(reinterpret_cast<const char*>(compressedAddresses.data()), compressedAddresses.size());
-                    }
-                    else
-                    {
-                        addressFile.write(reinterpret_cast<const char*>(addressBuffer.data()), addressBuffer.size() * sizeof(uint32_t));
-                    }
-
-                    addressBuffer.clear();
-                }
-            }
+            case ValueType::Int8: Memory::Dump<int8_t>(startAddress, endAddress); break;
+            case ValueType::UInt8: Memory::Dump<uint8_t>(startAddress, endAddress); break;
+            case ValueType::Int16: Memory::Dump<int16_t>(startAddress, endAddress); break;
+            case ValueType::UInt16: Memory::Dump<uint16_t>(startAddress, endAddress); break;
+            case ValueType::Int32: Memory::Dump<int32_t>(startAddress, endAddress); break;
+            case ValueType::UInt32: Memory::Dump<uint32_t>(startAddress, endAddress); break;
+            case ValueType::Int64: Memory::Dump<int64_t>(startAddress, endAddress); break;
+            case ValueType::UInt64: Memory::Dump<uint64_t>(startAddress, endAddress); break;
+            case ValueType::Float: Memory::Dump<float>(startAddress, endAddress); break;
+            case ValueType::Double: Memory::Dump<double>(startAddress, endAddress); break;
+            default: throw std::runtime_error("Unsupported ValueType");
         }
-
-        // 残りのバッファを書き込み
-        if (!valueBuffer.empty())
-        {
-            if (compress)
-            {
-                auto compressedValues = CompressValues(valueBuffer.data(), valueBuffer.size(), GetTypeSize(valueType));
-                auto compressedAddrs  = CompressAddresses(addressBuffer);
-                valueFile.write(reinterpret_cast<const char*>(compressedValues.data()), compressedValues.size());
-                addressFile.write(reinterpret_cast<const char*>(compressedAddrs.data()), compressedAddrs.size() * sizeof(uint32_t));
-            }
-            else
-            {
-                valueFile.write(reinterpret_cast<const char*>(valueBuffer.data()), valueBuffer.size());
-                addressFile.write(reinterpret_cast<const char*>(addressBuffer.data()), addressBuffer.size() * sizeof(uint32_t));
-            }
-        }
-
-        valueFile.close();
-        addressFile.close();
 
         // メタデータ保存
-        Search_SaveMeta(startAddress, dumpSize, valueType, compress);
+        if(!Memory::Search_SaveMeta(startAddress, endAddress, valueType))
+        {
+            throw std::runtime_error("Failed to save search meta data");
+        }
+
+        Memory::SetProgressCallback(nullptr);
     }
 }
