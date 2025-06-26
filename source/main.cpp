@@ -27,13 +27,13 @@ WUPS_USE_STORAGE("stardust"); // ストレージAPIの個別ID(なくても一�
 
 INITIALIZE_PLUGIN()
 {
+    NotificationModule_InitLibrary();
+    NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 5.0f);
     Exception::SetExceptionCallbacks();
 }
 
 ON_APPLICATION_START()
 {
-    NotificationModule_InitLibrary();
-    NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 5.0f);
     WHBLogUdpInit();
     gServer = Server::Create();
     if(!gServer)
@@ -50,5 +50,4 @@ ON_APPLICATION_REQUESTS_EXIT()
         gServer = nullptr;
     }
     WHBLogUdpDeinit();
-    NotificationModule_DeInitLibrary();
 }

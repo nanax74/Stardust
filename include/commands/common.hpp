@@ -27,6 +27,9 @@ namespace Command
         ClearSearchFile = 0x13,
         CheckSearchFile = 0x14,
 
+        // 応答要求(切断検出用)
+        Respond = 0x1000,
+
         // ダミー
         Dummy = 0xFFFFFFFF
     };

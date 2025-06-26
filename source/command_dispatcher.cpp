@@ -11,6 +11,7 @@
 #include "commands/unknown_search.hpp"
 #include "commands/clear_search_file.hpp"
 #include "commands/check_search_file.hpp"
+#include "commands/respond.hpp"
 
 std::unordered_map<Command::ID, CommandDispatcher::HandlerFunc> CommandDispatcher::handlers;
 
@@ -36,6 +37,9 @@ void CommandDispatcher::RegisterHandlers()
 
     // サーチ関係のファイルの有無を確認
     handlers[Command::ID::CheckSearchFile] = Command::CheckSearchFile;
+
+    // 応答を返すだけ
+    handlers[Command::ID::Respond] = Command::Respond;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)

@@ -18,8 +18,8 @@ namespace Command
         Memory::SetProgressCallback([packet](float progress)
         {
             Packet response(packet.GetContext());
-            response.Write(std::to_underlying(Command::ID::DumpForSearch));
-            response.Write(std::to_underlying(Command::Response::Progress));
+            response.Write(ID::DumpForSearch);
+            response.Write(Command::Response::Progress);
             response.Write(progress);
             response.Send();
         });
