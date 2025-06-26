@@ -18,12 +18,14 @@ class Server
 {
 public:
     static std::unique_ptr<Server> Create();
+    bool Init();
     ~Server();
     
 private:
     static constexpr const int32_t SOCKET_NULL = -1; // 空のソケット
     static constexpr const uint32_t IP_ADDRESS_NULL = 0; // 空のIPアドレス
     static constexpr const uint32_t SERVER_BACKLOG = 128; // ソケットの最大同時待機数
+    static constexpr const int64_t THREAD_SLEEP_TIME_MILLISECONDS = 10; // スレッドの待機時間(ミリ秒)
     uint16_t port = 50000;
     uint32_t ipAddress;
     int serverSocket;

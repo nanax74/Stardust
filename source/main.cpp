@@ -8,6 +8,7 @@
 #include <wups.h>
 
 // wut
+#include <coreinit/launch.h>
 #include <whb/log.h>
 #include <whb/log_udp.h>
 
@@ -26,15 +27,19 @@ WUPS_USE_STORAGE("stardust"); // ストレージAPIの個別ID(なくても一�
 
 INITIALIZE_PLUGIN()
 {
-    NotificationModule_InitLibrary();
-    NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 5.0f);
     Exception::SetExceptionCallbacks();
 }
 
 ON_APPLICATION_START()
 {
+    NotificationModule_InitLibrary();
+    NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 5.0f);
     WHBLogUdpInit();
     gServer = Server::Create();
+    if(!gServer)
+    {
+        WHBLogPrintf("Server::Create failed!");
+    }
 }
 
 ON_APPLICATION_REQUESTS_EXIT()
@@ -45,13 +50,5 @@ ON_APPLICATION_REQUESTS_EXIT()
         gServer = nullptr;
     }
     WHBLogUdpDeinit();
-}
-
-DEINITIALIZE_PLUGIN()
-{
-    if (gServer)
-    {
-        gServer.reset();
-        gServer = nullptr;
-    }
+    NotificationModule_DeInitLibrary();
 }

@@ -5,12 +5,13 @@
 #include <poll.h>
 #include <string>
 #include <thread>
+#include <unistd.h> // close関数に必要
 
 // wut
 #include <netinet/tcp.h> // TCP_NODELAY
 #include <nn/ac.h> // WiiUのIPアドレスを取得
 #include <notifications/notifications.h>
-#include <unistd.h> // close関数に必要
+#include <whb/log.h>
 
 // stardust
 #include "command_dispatcher.hpp"
@@ -21,76 +22,63 @@ std::unique_ptr<Server> gServer = nullptr;
 std::unique_ptr<Server> Server::Create()
 {
     std::unique_ptr<Server> server(new Server());
-    if (!server->initialized)
+    if (!server->Init())
     {
         return nullptr;
     }
     return server;
 }
 
-Server::Server()
+Server::Server() : ipAddress(IP_ADDRESS_NULL), serverSocket(SOCKET_NULL)
 {
-    // 変数の初期化
-    serverSocket = SOCKET_NULL;
     clientContexts.clear();
-    ipAddress = IP_ADDRESS_NULL;
+}
 
+bool Server::Init()
+{
     try
     {
-        // ソケットの初期化
         InitSocketFunctionPointers();
         CreateSocket();
         SetSocketReusable();
         SetSocketNonBlocking();
+
         sockaddr_in serverInfo;
         SetServerInfo(serverInfo);
         BindSocket(serverInfo);
         ListenSocket();
         NotificationIPAddress();
 
-        CommandDispatcher::RegisterHandlers(); // コマンドハンドラの登録
+        CommandDispatcher::RegisterHandlers();
 
-        initialized = true;
+        // スレッド起動（完全に初期化された後）
+        acceptThread.thread = std::jthread([this](std::stop_token t)
+        {
+            acceptThread.Main(t, this);
+        });
+
+        receiveThread.thread = std::jthread([this](std::stop_token t)
+        {
+            receiveThread.Main(t, this);
+        });
+
+        processThread.thread = std::jthread([this](std::stop_token t)
+        {
+            processThread.Main(t, this);
+        });
+
+        return true;
     }
-    catch(const std::exception& e)
+    catch (const std::exception& e)
     {
-        // 例外処理
-        NotificationModule_AddErrorNotification(e.what());
+        WHBLogPrintf("Server::Init failed: %s", e.what());
         if (serverSocket != SOCKET_NULL)
         {
             close(serverSocket);
             serverSocket = SOCKET_NULL;
         }
-        initialized = false;
-        return;
+        return false;
     }
-
-    // 接続ループを開始
-    acceptThread.thread = std::jthread
-    (
-        [this](std::stop_token token)
-        {
-            acceptThread.Main(token, this);
-        }
-    );
-
-    // 受信ループを開始
-    receiveThread.thread = std::jthread
-    (
-        [this](std::stop_token token)
-        {
-            receiveThread.Main(token, this);
-        }
-    );
-
-    // 処理ループを開始
-    processThread.thread = std::jthread
-    (
-        [this](std::stop_token token)
-        {
-            processThread.Main(token, this);
-        }
-    );
 }
 
 Server::~Server()
@@ -261,11 +249,11 @@ void Server::AcceptThread::Main(std::stop_token token, Server* server)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(THREAD_SLEEP_TIME_MILLISECONDS));
                 continue;
             }
-            std::string msg = std::format("Accept failed: {}", errno);
-            NotificationModule_AddErrorNotification(msg.c_str());
+            std::string msg = std::format(" {}", errno);
+            WHBLogPrintf("Accept failed: %s", strerror(errno));
             continue;
         }
 
@@ -323,14 +311,14 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
 
         if (pollfds.empty())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(THREAD_SLEEP_TIME_MILLISECONDS));
             continue;
         }
 
         int ret = poll(pollfds.data(), pollfds.size(), 100);
         if (ret < 0)
         {
-            NotificationModule_AddErrorNotification("poll failed");
+            WHBLogPrintf("poll failed");
             break;
         }
         else if (ret == 0)
@@ -358,7 +346,7 @@ void Server::ReceiveThread::Main(std::stop_token token, Server* server)
                 else if (received < 0)
                 {
                     std::string msg = std::format("Recv error on socket {}: errno {}", ctx->socket, errno);
-                    NotificationModule_AddErrorNotification(msg.c_str());
+                    WHBLogPrintf(msg.c_str());
                     shutdown(ctx->socket, SHUT_RDWR);
                     close(ctx->socket);
                     ctx->connected = false;
@@ -434,11 +422,11 @@ void Server::ProcessThread::Main(std::stop_token token, Server* server)
         catch (const std::exception& e)
         {
             std::string msg = std::format("Processing error: {}", e.what());
-            NotificationModule_AddErrorNotification(msg.c_str());
+            WHBLogPrintf(msg.c_str());
         }
 
         // 処理負荷軽減のため適宜スリープも検討（必要なら）
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(THREAD_SLEEP_TIME_MILLISECONDS));
     }
 }
 
