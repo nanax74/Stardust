@@ -1,11 +1,16 @@
 #include "command_dispatcher.hpp"
+
 #include <format>
 #include <cstring> // memcpy
 #include <thread>
+
 #include <notifications/notifications.h>
+
+#include <whb/log.h>
 
 #include "commands/common.hpp"
 #include "commands/write_memory.hpp"
+#include "commands/read_memory.hpp"
 #include "commands/dump_for_search.hpp"
 #include "commands/specific_search.hpp"
 #include "commands/unknown_search.hpp"
@@ -21,7 +26,7 @@ void CommandDispatcher::RegisterHandlers()
     handlers[Command::ID::WriteMemory] = Command::WriteMemory;
 
     // メモリ読み込み
-    handlers[Command::ID::ReadMemory] = Command::Dummy;
+    handlers[Command::ID::ReadMemory] = Command::ReadMemory;
 
     // メモリダンプ
     handlers[Command::ID::DumpForSearch] = Command::DumpForSearch;
@@ -56,6 +61,23 @@ void CommandDispatcher::Dispatch(Packet& packet)
         throw std::runtime_error("Unknown command ID");
     }
 
-    auto& handler = it->second;
-    handler(packet);
+    auto handler = it->second;
+
+    // Packetをムーブしてスレッド分離（jthreadにjoinしない）
+    std::jthread([handler, packet = std::move(packet)]() mutable
+    {
+        try
+        {
+            handler(packet);
+        }
+        catch (const std::exception& e)
+        {
+            WHBLogPrintf("Command handler exception: %s", e.what());
+        }
+        catch (...)
+        {
+            WHBLogPrintf("Unknown exception in handler");
+        }
+    }).detach(); // 明示的にdetach、またはstd::threadに変更してもOK
 }
+

@@ -86,14 +86,12 @@ bool Server::Init()
 
 void Server::Shutdown()
 {
-    WHBLogPrintf("Server shutting down");
     acceptThread.Stop();
     receiveThread.Stop();
     processThread.Stop();
     CloseClientSocket();
     CloseServerSocket();
     nn::ac::Finalize();
-    WHBLogPrintf("Server shutdown done");
 }
 
 Server::~Server()

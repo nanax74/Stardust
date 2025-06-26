@@ -127,5 +127,7 @@ namespace Memory
             addressFile.close();
             addressBuffer.clear();
         }
+
+        if (g_ReportProgress) g_ReportProgress(1.0f);
     }
 }

@@ -37,9 +37,10 @@ namespace Command
     // 応答
     enum class Response : uint32_t
     {
-        Success = 0x0,
-        Failure = 0x1,
-        Progress = 0x2
+        Failure = 0x0,
+        Success = 0x1,
+        Progress = 0x2,
+        Data = 0x3
     };
 
     enum class Comparison : uint32_t
@@ -129,5 +130,25 @@ namespace Memory
     T AlignUp(T value, size_t alignment)
     {
         return (value + (alignment - 1)) & ~(alignment - 1);
+    }
+
+    template <typename T>
+    void SendSearchResult(uint32_t address, T value, Command::ID cmd, std::shared_ptr<SocketContext>& context)
+    {
+        Packet response(context);
+        response.Write(std::to_underlying(cmd));
+        response.Write(std::to_underlying(Command::Response::Data));
+        response.Write(address);
+        response.Write(value);
+        response.Send();
+    }
+
+    template <typename T>
+    auto MakeSendSearchResultCallback(std::shared_ptr<SocketContext>& socket)
+    {
+        return [&socket](uint32_t address, T value, Command::ID cmd)
+        {
+            SendSearchResult<T>(address, value, cmd, socket);
+        };
     }
 }

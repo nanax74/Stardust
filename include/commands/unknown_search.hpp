@@ -26,7 +26,7 @@ namespace Command
 namespace Memory
 {
     template <typename T>
-    void UnknownSearch(uint32_t startAddress, uint32_t endAddress, Command::ValueType valueType, Command::Comparison comparison)
+    void UnknownSearch(uint32_t startAddress, uint32_t endAddress, Command::ValueType valueType, Command::Comparison comparison, std::function<void(uint32_t, T, Command::ID)> onResult = nullptr)
     {
         // アドレスがオーバーフローしていたらキャンセル
         if(startAddress >= endAddress)
@@ -85,6 +85,9 @@ namespace Memory
         // 進捗通知用のタイマー
         auto lastReport = std::chrono::steady_clock::now();
 
+        // 結果が何件かを格納
+        uint32_t matchCount = 0;
+
         // データ全体をブロック毎に処理
         for(uint32_t index = 0; index < entryCount;) // indexは現在の要素数
         {
@@ -124,6 +127,7 @@ namespace Memory
 
                 if(match)
                 {
+                    matchCount++;
                     valueWriteBuffer.push_back(newValue);
                     addressWriteBuffer.push_back(address);
                 }
@@ -133,7 +137,12 @@ namespace Memory
                 if (now - lastReport >= std::chrono::milliseconds(100))
                 {
                     float progress = static_cast<float>(index) / entryCount;
+
+                    // 1.0fには達しないようにする
+                    if (progress >= 1.0f) progress = 0.999f;
+
                     if (g_ReportProgress) g_ReportProgress(progress);
+
                     lastReport = now;
                 }
             }
@@ -155,5 +164,27 @@ namespace Memory
 
         fs::rename(basePath / "Value.tmp", basePath / "Value.bin");
         fs::rename(basePath / "Address.tmp", basePath / "Address.bin");
+
+        if (onResult && matchCount < 10000)
+        {
+            std::ifstream sendValueFile(basePath / "Value.bin", std::ios::binary);
+            std::ifstream sendAddressFile(basePath / "Address.bin", std::ios::binary);
+
+            for (uint32_t i = 0; i < matchCount; ++i)
+            {
+                T value;
+                uint32_t address;
+
+                sendValueFile.read(reinterpret_cast<char*>(&value), sizeof(T));
+                sendAddressFile.read(reinterpret_cast<char*>(&address), sizeof(uint32_t));
+
+                onResult(address, value, Command::ID::UnknownSearch);
+            }
+
+            sendValueFile.close();
+            sendAddressFile.close();
+        }
+
+        if (g_ReportProgress) g_ReportProgress(1.0f);
     }
 }

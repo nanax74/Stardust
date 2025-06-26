@@ -3,8 +3,6 @@
 
 #include <format>
 
-#include <notifications/notifications.h>
-
 namespace Command
 {
     void WriteMemory(Packet& packet)
@@ -20,11 +18,13 @@ namespace Command
         }
 
         uint32_t address = packet.Read<uint32_t>();
-        uint32_t type = packet.Read<uint32_t>();
+        ValueType valueType = static_cast<ValueType>(packet.Read<uint32_t>());
 
-        switch (type)
+        switch (valueType)
         {
-            case 1: // uint8_t
+            // 1byte
+            case ValueType::Int8:
+            case ValueType::UInt8:
             {
                 if (packet.Size() < sizeof(uint8_t))
                 {
@@ -36,7 +36,9 @@ namespace Command
                 Memory::Write(address, value);
                 break;
             }
-            case 2: // uint16_t
+            // 2byte
+            case ValueType::Int16:
+            case ValueType::UInt16:
             {
                 if (packet.Size() < sizeof(uint16_t))
                 {
@@ -48,7 +50,10 @@ namespace Command
                 Memory::Write(address, value);
                 break;
             }
-            case 4: // uint32_t
+            // 4byte
+            case ValueType::Int32:
+            case ValueType::UInt32:
+            case ValueType::Float:
             {
                 if (packet.Size() < sizeof(uint32_t))
                 {
@@ -60,7 +65,10 @@ namespace Command
                 Memory::Write(address, value);
                 break;
             }
-            case 8: // uint64_t
+            // 8byte
+            case ValueType::Int64:
+            case ValueType::UInt64:
+            case ValueType::Double:
             {
                 if (packet.Size() < sizeof(uint64_t))
                 {

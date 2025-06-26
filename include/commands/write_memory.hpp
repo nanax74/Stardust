@@ -33,10 +33,5 @@ namespace Memory
         // メモリに書き込み
         T* ptr = reinterpret_cast<T*>(address);
         *ptr = value;
-
-        // 通知を追加
-        NotificationModule_AddInfoNotification(
-            std::format("Wrote {} to 0x{:08X}", value, address).c_str()
-        );
     }
 }
