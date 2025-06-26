@@ -46,3 +46,12 @@ ON_APPLICATION_REQUESTS_EXIT()
     }
     WHBLogUdpDeinit();
 }
+
+DEINITIALIZE_PLUGIN()
+{
+    if (gServer)
+    {
+        gServer.reset();
+        gServer = nullptr;
+    }
+}

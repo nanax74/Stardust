@@ -10,9 +10,9 @@ namespace Command
         Memory::SetProgressCallback([packet](float progress)
         {
             Packet response(packet.GetContext());
-            response.Write<uint32_t>(std::to_underlying(Command::ID::SpecificSearch));
-            response.Write<uint32_t>(std::to_underlying(Command::Response::Progress));
-            response.Write<float>(progress);
+            response.Write(std::to_underlying(Command::ID::SpecificSearch));
+            response.Write(std::to_underlying(Command::Response::Progress));
+            response.Write(progress);
             response.Send();
         });
 

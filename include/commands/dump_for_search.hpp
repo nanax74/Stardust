@@ -18,7 +18,7 @@
 namespace Command
 {
     // メモリダンプコマンド
-    void DumpMemory(Packet& packet);
+    void DumpForSearch(Packet& packet);
 }
 
 namespace Memory

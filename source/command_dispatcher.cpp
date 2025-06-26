@@ -6,9 +6,11 @@
 
 #include "commands/common.hpp"
 #include "commands/write_memory.hpp"
-#include "commands/dump_memory.hpp"
+#include "commands/dump_for_search.hpp"
 #include "commands/specific_search.hpp"
 #include "commands/unknown_search.hpp"
+#include "commands/clear_search_file.hpp"
+#include "commands/check_search_file.hpp"
 
 std::unordered_map<Command::ID, CommandDispatcher::HandlerFunc> CommandDispatcher::handlers;
 
@@ -21,13 +23,19 @@ void CommandDispatcher::RegisterHandlers()
     handlers[Command::ID::ReadMemory] = Command::Dummy;
 
     // メモリダンプ
-    handlers[Command::ID::DumpMemory] = Command::DumpMemory;
+    handlers[Command::ID::DumpForSearch] = Command::DumpForSearch;
 
     // 既知の値検索
     handlers[Command::ID::SpecificSearch] = Command::Dummy;
 
     // 未知の値検索
     handlers[Command::ID::UnknownSearch] = Command::UnknownSearch;
+
+    // サーチ関係のファイルを消去
+    handlers[Command::ID::ClearSearchFile] = Command::ClearSearchFile;
+
+    // サーチ関係のファイルの有無を確認
+    handlers[Command::ID::CheckSearchFile] = Command::CheckSearchFile;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)

@@ -20,12 +20,12 @@ namespace Command
         WriteMemory = 0x0,
         ReadMemory = 0x1,
 
-        // メモリダンプ
-        DumpMemory = 0x10,
-
         // メモリサーチ
-        SpecificSearch = 0x20,
-        UnknownSearch = 0x21,
+        DumpForSearch = 0x10,
+        SpecificSearch = 0x11,
+        UnknownSearch = 0x12,
+        ClearSearchFile = 0x13,
+        CheckSearchFile = 0x14,
 
         // ダミー
         Dummy = 0xFFFFFFFF

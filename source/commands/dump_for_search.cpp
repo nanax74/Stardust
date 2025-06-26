@@ -1,4 +1,4 @@
-#include "commands/dump_memory.hpp"
+#include "commands/dump_for_search.hpp"
 #include "commands/common.hpp"
 
 // std
@@ -13,14 +13,14 @@ using Clock = std::chrono::steady_clock;
 
 namespace Command
 {
-    void DumpMemory(Packet& packet)
+    void DumpForSearch(Packet& packet)
     {
         Memory::SetProgressCallback([packet](float progress)
         {
             Packet response(packet.GetContext());
-            response.Write<uint32_t>(std::to_underlying(Command::ID::DumpMemory));
-            response.Write<uint32_t>(std::to_underlying(Command::Response::Progress));
-            response.Write<float>(progress);
+            response.Write(std::to_underlying(Command::ID::DumpForSearch));
+            response.Write(std::to_underlying(Command::Response::Progress));
+            response.Write(progress);
             response.Send();
         });
 
