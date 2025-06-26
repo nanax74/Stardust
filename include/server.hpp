@@ -19,6 +19,7 @@ class Server
 public:
     static std::unique_ptr<Server> Create();
     bool Init();
+    void Shutdown();
     ~Server();
     
 private:
@@ -67,7 +68,8 @@ private:
     {
     public:
         std::jthread thread;
-        void Main(std::stop_token token, Server* server);
+        Server* server = nullptr;
+        void Main(std::stop_token token);
         void Stop();
     };
 
@@ -77,7 +79,8 @@ private:
     {
     public:
         std::jthread thread;
-        void Main(std::stop_token token, Server* server);
+        Server* server = nullptr;
+        void Main(std::stop_token token);
         void Stop();
     };
 
@@ -90,7 +93,8 @@ private:
     {
     public:
         std::jthread thread;
-        void Main(std::stop_token token, Server* server);
+        Server* server = nullptr;
+        void Main(std::stop_token token);
         void Stop();
     };
 

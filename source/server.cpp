@@ -52,19 +52,22 @@ bool Server::Init()
         CommandDispatcher::RegisterHandlers();
 
         // スレッド起動（完全に初期化された後）
+        acceptThread.server = this;
         acceptThread.thread = std::jthread([this](std::stop_token t)
         {
-            acceptThread.Main(t, this);
+            acceptThread.Main(t);
         });
 
+        receiveThread.server = this;
         receiveThread.thread = std::jthread([this](std::stop_token t)
         {
-            receiveThread.Main(t, this);
+            receiveThread.Main(t);
         });
 
+        processThread.server = this;
         processThread.thread = std::jthread([this](std::stop_token t)
         {
-            processThread.Main(t, this);
+            processThread.Main(t);
         });
 
         return true;
@@ -81,14 +84,21 @@ bool Server::Init()
     }
 }
 
-Server::~Server()
+void Server::Shutdown()
 {
+    WHBLogPrintf("Server shutting down");
     acceptThread.Stop();
     receiveThread.Stop();
     processThread.Stop();
     CloseClientSocket();
     CloseServerSocket();
     nn::ac::Finalize();
+    WHBLogPrintf("Server shutdown done");
+}
+
+Server::~Server()
+{
+    Shutdown();
 }
 
 // ネットを初期化しIPアドレスを取得
@@ -235,7 +245,7 @@ void Server::Broadcast(const std::vector<uint8_t>& data)
 }
 
 // クライアントの接続待機
-void Server::AcceptThread::Main(std::stop_token token, Server* server)
+void Server::AcceptThread::Main(std::stop_token token)
 {
     NotificationModule_AddInfoNotification("Waiting for client to connect");
 
@@ -284,7 +294,7 @@ void Server::AcceptThread::Stop()
 }
 
 // スレッド
-void Server::ReceiveThread::Main(std::stop_token token, Server* server)
+void Server::ReceiveThread::Main(std::stop_token token)
 {
     constexpr size_t BUFFER_SIZE = 0x1000;
     std::vector<uint8_t> buffer(BUFFER_SIZE);
@@ -391,7 +401,7 @@ void Server::ReceiveThread::Stop()
     }
 }
 
-void Server::ProcessThread::Main(std::stop_token token, Server* server)
+void Server::ProcessThread::Main(std::stop_token token)
 {
     while (!token.stop_requested())
     {
@@ -435,6 +445,12 @@ void Server::ProcessThread::Stop()
     if (thread.joinable())
     {
         thread.request_stop();
+
+        {
+            std::lock_guard<std::mutex> lock(server->queueMutex);
+            server->queueCondVar.notify_one();
+        }
+
         thread.join();
     }
 }
