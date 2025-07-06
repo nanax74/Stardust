@@ -432,9 +432,6 @@ void Server::ProcessThread::Main(std::stop_token token)
             std::string msg = std::format("Processing error: {}", e.what());
             WHBLogPrintf(msg.c_str());
         }
-
-        // 処理負荷軽減のため適宜スリープも検討（必要なら）
-        std::this_thread::sleep_for(std::chrono::milliseconds(THREAD_SLEEP_TIME_MILLISECONDS));
     }
 }
 

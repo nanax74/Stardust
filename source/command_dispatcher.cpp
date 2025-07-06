@@ -63,8 +63,8 @@ void CommandDispatcher::Dispatch(Packet& packet)
 
     auto handler = it->second;
 
-    // Packetをムーブしてスレッド分離（jthreadにjoinしない）
-    std::jthread([handler, packet = std::move(packet)]() mutable
+    // Packetをムーブしてスレッド分離
+    std::thread([handler, packet = std::move(packet)]() mutable
     {
         try
         {
@@ -78,6 +78,6 @@ void CommandDispatcher::Dispatch(Packet& packet)
         {
             WHBLogPrintf("Unknown exception in handler");
         }
-    }).detach(); // 明示的にdetach、またはstd::threadに変更してもOK
+    }).detach();
 }
 
