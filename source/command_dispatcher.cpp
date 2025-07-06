@@ -45,6 +45,9 @@ void CommandDispatcher::RegisterHandlers()
 
     // 応答を返すだけ
     handlers[Command::ID::Respond] = Command::Respond;
+
+    // 複数メモリ読み込み
+    handlers[Command::ID::ReadMultipleMemory] = Command::ReadMultipleMemory;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)

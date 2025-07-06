@@ -14,6 +14,30 @@
 // stardust
 #include "socket_context.hpp"
 
+class ThreadWorkerBase
+{
+public:
+    std::jthread thread;
+    virtual ~ThreadWorkerBase() = default;
+
+    void Start(std::function<void(std::stop_token)> func)
+    {
+        thread = std::jthread(func);
+    }
+
+    virtual void Stop()
+    {
+        if (thread.joinable())
+        {
+            thread.request_stop();
+            thread.join();
+        }
+    }
+
+protected:
+    virtual void Main(std::stop_token token) = 0;
+};
+
 class Server
 {
 public:
@@ -26,7 +50,6 @@ private:
     static constexpr const int32_t SOCKET_NULL = -1; // 空のソケット
     static constexpr const uint32_t IP_ADDRESS_NULL = 0; // 空のIPアドレス
     static constexpr const uint32_t SERVER_BACKLOG = 128; // ソケットの最大同時待機数
-    static constexpr const int64_t THREAD_SLEEP_TIME_MILLISECONDS = 10; // スレッドの待機時間(ミリ秒)
     uint16_t port = 50000;
     uint32_t ipAddress;
     int serverSocket;
@@ -64,24 +87,20 @@ private:
     bool SendToClient(std::shared_ptr<SocketContext> client, const std::vector<uint8_t>& data);
     void Broadcast(const std::vector<uint8_t>& data);
 
-    class AcceptThread
+    class AcceptThread : public ThreadWorkerBase
     {
     public:
-        std::jthread thread;
         Server* server = nullptr;
-        void Main(std::stop_token token);
-        void Stop();
+        void Main(std::stop_token token) override;
     };
 
     AcceptThread acceptThread;
 
-    class ReceiveThread
+    class ReceiveThread : public ThreadWorkerBase
     {
     public:
-        std::jthread thread;
         Server* server = nullptr;
-        void Main(std::stop_token token);
-        void Stop();
+        void Main(std::stop_token token) override;
     };
 
     ReceiveThread receiveThread;
@@ -89,13 +108,12 @@ private:
     std::mutex queueMutex;
     std::condition_variable queueCondVar;
 
-    class ProcessThread
+    class ProcessThread : public ThreadWorkerBase
     {
     public:
-        std::jthread thread;
         Server* server = nullptr;
-        void Main(std::stop_token token);
-        void Stop();
+        void Main(std::stop_token token) override;
+        void Stop() override; // Override to notify condition variable
     };
 
     ProcessThread processThread;

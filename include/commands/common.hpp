@@ -29,6 +29,7 @@ namespace Command
 
         // 応答要求(切断検出用)
         Respond = 0x1000,
+        ReadMultipleMemory = 0x1001,
 
         // ダミー
         Dummy = 0xFFFFFFFF
