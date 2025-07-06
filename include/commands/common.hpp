@@ -19,6 +19,7 @@ namespace Command
         // メモリ読み書き
         WriteMemory = 0x0,
         ReadMemory = 0x1,
+        ReadMultipleMemory = 0x2,
 
         // メモリサーチ
         DumpForSearch = 0x10,
@@ -29,7 +30,6 @@ namespace Command
 
         // 応答要求(切断検出用)
         Respond = 0x1000,
-        ReadMultipleMemory = 0x1001,
 
         // ダミー
         Dummy = 0xFFFFFFFF
@@ -93,8 +93,20 @@ namespace Command
     std::string ValueTypeToString(Command::ValueType vt);
     Command::ValueType StringToValueType(const std::string& str);
 
-    // ダミーハンドラ
-    void Dummy(Packet& packet);
+    template <typename T>
+    bool CompareValues(T val1, T val2, Comparison comp)
+    {
+        switch (comp)
+        {
+            case Comparison::Equal:         return val1 == val2;
+            case Comparison::NotEqual:      return val1 != val2;
+            case Comparison::LessThan:      return val1 < val2;
+            case Comparison::LessOrEqual:   return val1 <= val2;
+            case Comparison::GreaterThan:   return val1 > val2;
+            case Comparison::GreaterOrEqual: return val1 >= val2;
+            default: return false;
+        }
+    }
 }
 
 namespace Memory

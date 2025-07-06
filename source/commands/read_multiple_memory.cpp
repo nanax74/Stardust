@@ -3,6 +3,7 @@
 #include <vector>
 #include <whb/log.h>
 #include <coreinit/cache.h> // for DCFlushRange
+#include <coreinit/memorymap.h>
 
 #include "commands/common.hpp"
 
@@ -25,12 +26,19 @@ namespace Command
             uint32_t address = packet.Read<uint32_t>();
             uint32_t size = packet.Read<uint32_t>();
 
-            if (size == 0 || address == 0)
+            bool isValidRange = true;
+            if (size == 0 || address == 0 || !OSIsAddressValid(address) || !OSIsAddressValid(address + size - 1))
             {
-                WHBLogPrintf("ReadMultipleMemory: Invalid address or size (address: 0x%X, size: %u)", address, size);
-                // Write dummy data for invalid regions to maintain packet structure
-                response.Write(address);
-                response.Write(size);
+                isValidRange = false;
+                WHBLogPrintf("ReadMultipleMemory: Invalid address or size or range (address: 0x%X, size: %u)", address, size);
+            }
+
+            // Write address and size back to the response
+            response.Write(address);
+            response.Write(size);
+
+            if (!isValidRange)
+            {
                 // Fill with zeros for invalid data
                 for (uint32_t j = 0; j < size; ++j)
                 {
@@ -45,10 +53,6 @@ namespace Command
 
             // Flush data cache for the region to ensure we read from memory, not stale cache
             DCFlushRange(reinterpret_cast<void*>(alignedAddress), alignedSize);
-
-            // Write address and size back to the response
-            response.Write(address);
-            response.Write(size);
 
             // Read memory and append to response
             for (uint32_t j = 0; j < size; ++j)

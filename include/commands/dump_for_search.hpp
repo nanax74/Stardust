@@ -113,20 +113,21 @@ namespace Memory
             }
         }
 
-        // 残りのバッファを書き込み
-        if (!valueBuffer.empty())
-        {
-            valueFile.write(reinterpret_cast<const char*>(valueBuffer.data()), valueBuffer.size() * valueSize);
-            valueFile.close();
-            valueBuffer.clear();
-        }
+        // ヘルパーラムダ: バッファをファイルに書き込み、クリアする
+        auto writeAndClearBuffer = [&](auto& buffer, auto& file, size_t elementSize) {
+            if (!buffer.empty()) {
+                file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * elementSize);
+                buffer.clear();
+            }
+        };
 
-        if(!addressBuffer.empty())
-        {
-            addressFile.write(reinterpret_cast<const char*>(addressBuffer.data()), addressBuffer.size() * sizeof(uint32_t));
-            addressFile.close();
-            addressBuffer.clear();
-        }
+        // 残りのバッファを書き込み
+        writeAndClearBuffer(valueBuffer, valueFile, valueSize);
+        writeAndClearBuffer(addressBuffer, addressFile, sizeof(uint32_t));
+
+        // ファイルを閉じる (デストラクタが処理するが、明示的に閉じることも可能)
+        valueFile.close();
+        addressFile.close();
 
         if (g_ReportProgress) g_ReportProgress(1.0f);
     }

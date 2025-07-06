@@ -17,6 +17,20 @@
 #include "command_dispatcher.hpp"
 #include "server.hpp"
 
+void ThreadWorkerBase::Start(std::function<void(std::stop_token)> func)
+{
+    thread = std::jthread(func);
+}
+
+void ThreadWorkerBase::Stop()
+{
+    if (thread.joinable())
+    {
+        thread.request_stop();
+        thread.join();
+    }
+}
+
 std::unique_ptr<Server> gServer = nullptr;
 
 std::unique_ptr<Server> Server::Create()
@@ -257,7 +271,7 @@ void Server::AcceptThread::Main(std::stop_token token)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(THREAD_SLEEP_TIME_MILLISECONDS));
+                std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Polling interval
                 continue;
             }
             std::string msg = std::format(" {}", errno);
@@ -282,14 +296,7 @@ void Server::AcceptThread::Main(std::stop_token token)
     }
 }
 
-void Server::AcceptThread::Stop()
-{
-    if (thread.joinable())
-    {
-        thread.request_stop();
-        thread.join();
-    }
-}
+
 
 // スレッド
 void Server::ReceiveThread::Main(std::stop_token token)
@@ -317,11 +324,7 @@ void Server::ReceiveThread::Main(std::stop_token token)
             }
         }
 
-        if (pollfds.empty())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(THREAD_SLEEP_TIME_MILLISECONDS));
-            continue;
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Polling interval
 
         int ret = poll(pollfds.data(), pollfds.size(), 100);
         if (ret < 0)
@@ -390,14 +393,7 @@ void Server::ReceiveThread::Main(std::stop_token token)
     }
 }
 
-void Server::ReceiveThread::Stop()
-{
-    if (thread.joinable())
-    {
-        thread.request_stop();
-        thread.join();
-    }
-}
+
 
 void Server::ProcessThread::Main(std::stop_token token)
 {

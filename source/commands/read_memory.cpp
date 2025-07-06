@@ -12,44 +12,32 @@ namespace Command
         {
             response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
             response.Send();
-            throw std::runtime_error("Packet too small to contain type and address");
+            throw std::runtime_error("Packet too small to contain address and value type");
         }
 
-        uint32_t startAddress = packet.Read<uint32_t>();
-        uint32_t endAddress   = packet.Read<uint32_t>();
+        uint32_t address = packet.Read<uint32_t>();
+        Command::ValueType valueType = static_cast<Command::ValueType>(packet.Read<uint32_t>());
 
-        response.Write(startAddress);
+        response.Write<uint32_t>(std::to_underlying(Response::Data)); // 成功応答
+        response.Write(address); // アドレスを返す
 
-        uint32_t currentAddress = startAddress;
-
-        while (currentAddress < endAddress)
+        // ValueType に応じてメモリを読み込み、Packet に書き込む
+        switch (valueType)
         {
-            uint32_t remaining = endAddress - currentAddress;
-        
-            if (remaining >= 8)
-            {
-                uint64_t value = Memory::Read<uint64_t>(currentAddress);
-                response.Write(value);
-                currentAddress += 8;
-            }
-            else if (remaining >= 4)
-            {
-                uint32_t value = Memory::Read<uint32_t>(currentAddress);
-                response.Write(value);
-                currentAddress += 4;
-            }
-            else if (remaining >= 2)
-            {
-                uint16_t value = Memory::Read<uint16_t>(currentAddress);
-                response.Write(value);
-                currentAddress += 2;
-            }
-            else
-            {
-                uint8_t value = Memory::Read<uint8_t>(currentAddress);
-                response.Write(value);
-                currentAddress += 1;
-            }
+            case Command::ValueType::Int8:   response.Write(Memory::Read<int8_t>(address)); break;
+            case Command::ValueType::UInt8:  response.Write(Memory::Read<uint8_t>(address)); break;
+            case Command::ValueType::Int16:  response.Write(Memory::Read<int16_t>(address)); break;
+            case Command::ValueType::UInt16: response.Write(Memory::Read<uint16_t>(address)); break;
+            case Command::ValueType::Int32:  response.Write(Memory::Read<int32_t>(address)); break;
+            case Command::ValueType::UInt32: response.Write(Memory::Read<uint32_t>(address)); break;
+            case Command::ValueType::Int64:  response.Write(Memory::Read<int64_t>(address)); break;
+            case Command::ValueType::UInt64: response.Write(Memory::Read<uint64_t>(address)); break;
+            case Command::ValueType::Float:  response.Write(Memory::Read<float>(address)); break;
+            case Command::ValueType::Double: response.Write(Memory::Read<double>(address)); break;
+            default:
+                response.Write<uint32_t>(std::to_underlying(Response::Failure)); // 失敗
+                response.Send();
+                throw std::runtime_error("Unsupported value type for ReadMemory");
         }
         response.Send();
     }

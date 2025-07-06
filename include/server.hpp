@@ -20,19 +20,9 @@ public:
     std::jthread thread;
     virtual ~ThreadWorkerBase() = default;
 
-    void Start(std::function<void(std::stop_token)> func)
-    {
-        thread = std::jthread(func);
-    }
+    void Start(std::function<void(std::stop_token)> func);
 
-    virtual void Stop()
-    {
-        if (thread.joinable())
-        {
-            thread.request_stop();
-            thread.join();
-        }
-    }
+    virtual void Stop();
 
 protected:
     virtual void Main(std::stop_token token) = 0;
@@ -113,7 +103,7 @@ private:
     public:
         Server* server = nullptr;
         void Main(std::stop_token token) override;
-        void Stop() override; // Override to notify condition variable
+        void Stop() override;
     };
 
     ProcessThread processThread;

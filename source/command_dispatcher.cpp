@@ -11,6 +11,7 @@
 #include "commands/common.hpp"
 #include "commands/write_memory.hpp"
 #include "commands/read_memory.hpp"
+#include "commands/read_multiple_memory.hpp"
 #include "commands/dump_for_search.hpp"
 #include "commands/specific_search.hpp"
 #include "commands/unknown_search.hpp"
@@ -28,11 +29,14 @@ void CommandDispatcher::RegisterHandlers()
     // メモリ読み込み
     handlers[Command::ID::ReadMemory] = Command::ReadMemory;
 
+    // 複数メモリ読み込み
+    handlers[Command::ID::ReadMultipleMemory] = Command::ReadMultipleMemory;
+
     // メモリダンプ
     handlers[Command::ID::DumpForSearch] = Command::DumpForSearch;
 
     // 既知の値検索
-    handlers[Command::ID::SpecificSearch] = Command::Dummy;
+    handlers[Command::ID::SpecificSearch] = Command::SpecificSearch;
 
     // 未知の値検索
     handlers[Command::ID::UnknownSearch] = Command::UnknownSearch;
@@ -45,9 +49,6 @@ void CommandDispatcher::RegisterHandlers()
 
     // 応答を返すだけ
     handlers[Command::ID::Respond] = Command::Respond;
-
-    // 複数メモリ読み込み
-    handlers[Command::ID::ReadMultipleMemory] = Command::ReadMultipleMemory;
 }
 
 void CommandDispatcher::Dispatch(Packet& packet)

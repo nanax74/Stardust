@@ -8,6 +8,12 @@ namespace Command
     void ClearSearchFile(Packet& packet)
     {
         Memory::ClearSearchFile();
+
+        // 成功応答を返す
+        Packet response(packet.GetContext());
+        response.Write<uint32_t>(std::to_underlying(ID::ClearSearchFile));
+        response.Write<uint32_t>(std::to_underlying(Response::Success));
+        response.Send();
     }
 }
 

@@ -68,6 +68,7 @@ std::vector<Packet> Packet::ReceivePackets(std::vector<uint8_t>& buffer, std::sh
     {
         uint32_t packetSize;
         std::memcpy(&packetSize, buffer.data(), 4);
+        packetSize = ntohl(packetSize); // ネットワークバイトオーダーからホストバイトオーダーへ変換
 
         if (buffer.size() < 4 + packetSize)
             break;
@@ -93,10 +94,11 @@ void Packet::Send() const
     uint32_t size = static_cast<uint32_t>(buffer.size());
     std::vector<uint8_t> fullMessage;
 
-    // 長さ（4バイト）を先頭に追加（ネットワークバイトオーダーに変換しておくのが理想）
+    // 長さ（4バイト）を先頭に追加（ネットワークバイトオーダーに変換）
+    uint32_t network_size = htonl(size); // ホストバイトオーダーからネットワークバイトオーダーへ変換
     fullMessage.insert(fullMessage.end(),
-                       reinterpret_cast<uint8_t*>(&size),
-                       reinterpret_cast<uint8_t*>(&size) + sizeof(uint32_t));
+                       reinterpret_cast<uint8_t*>(&network_size),
+                       reinterpret_cast<uint8_t*>(&network_size) + sizeof(uint32_t));
 
     // 本体を追加
     fullMessage.insert(fullMessage.end(), buffer.begin(), buffer.end());
