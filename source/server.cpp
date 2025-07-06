@@ -326,10 +326,16 @@ void Server::ReceiveThread::Main(std::stop_token token)
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Polling interval
 
+        if (pollfds.empty()) {
+            // クライアントがいない場合はpollを呼び出さず、少し長めにスリープ
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
         int ret = poll(pollfds.data(), pollfds.size(), 100);
         if (ret < 0)
         {
-            WHBLogPrintf("poll failed");
+            WHBLogPrintf("poll failed: errno %d (%s)", errno, strerror(errno));
             break;
         }
         else if (ret == 0)
