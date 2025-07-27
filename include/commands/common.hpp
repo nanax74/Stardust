@@ -107,6 +107,8 @@ namespace Command
             default: return false;
         }
     }
+
+    void CommandReceivedLogPrint(const char* cmd);
 }
 
 namespace Memory

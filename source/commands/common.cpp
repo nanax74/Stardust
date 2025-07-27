@@ -5,6 +5,10 @@
 #include <format>
 #include <fstream>
 #include <regex>
+#include <string>
+
+// wut
+#include <whb/log.h>
 
 namespace Command
 {
@@ -63,6 +67,11 @@ namespace Command
         response.Write<uint32_t>(std::to_underlying(ID::Dummy));
         response.Write<uint32_t>(std::to_underlying(Response::Success)); // 成功応答
         response.Send();
+    }
+
+    void CommandReceivedLogPrint(const char* cmd)
+    {
+        WHBLogPrintf("%s command received");
     }
 }
 

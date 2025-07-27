@@ -5,12 +5,10 @@
 
 namespace Command
 {
-    // サーチをクリア
     void ClearSearchFile(Packet& packet);
 }
 
 namespace Memory
 {
-    // サーチをクリア
     void ClearSearchFile();
 }

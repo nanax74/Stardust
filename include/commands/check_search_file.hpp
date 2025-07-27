@@ -5,12 +5,10 @@
 
 namespace Command
 {
-    // サーチをクリア
     void CheckSearchFile(Packet& packet);
 }
 
 namespace Memory
 {
-    // サーチをクリア
     bool CheckSearchFile();
 }

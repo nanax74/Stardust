@@ -73,6 +73,7 @@
         "bitset": "cpp",
         "text_encoding": "cpp",
         "queue": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "filesystem": "cpp"
     }
 }
