@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <notifications/notifications.h>
+#include "notification.hpp"
 
 #include "packet.hpp"
 

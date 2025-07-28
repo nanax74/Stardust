@@ -1,13 +1,18 @@
 #pragma once
 
+#include "commands/base.hpp"
 #include "packet.hpp"
 
 #include <coreinit/memorymap.h>
 
 namespace Command
 {
-    // メモリ書き込みコマンド
-    void ReadMemory(Packet& packet);
+    class ReadMemory : public Base
+    {
+        public:
+            ReadMemory() : Base("ReadMemory") {}
+            void Process(Packet& packet) override;
+    };
 }
 
 namespace Memory

@@ -11,7 +11,7 @@
 #include <whb/log.h>
 
 // wums
-#include <notifications/notifications.h>
+#include "notification.hpp"
 
 using namespace std;
 

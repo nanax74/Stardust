@@ -10,12 +10,13 @@
 // wut
 #include <netinet/tcp.h> // TCP_NODELAY
 #include <nn/ac.h> // WiiUのIPアドレスを取得
-#include <notifications/notifications.h>
+#include "notification.hpp"
 #include <whb/log.h>
 
 // stardust
 #include "command_dispatcher.hpp"
 #include "server.hpp"
+#include "logger.hpp"
 
 void ThreadWorkerBase::Start(std::function<void(std::stop_token)> func)
 {
@@ -88,7 +89,7 @@ bool Server::Init()
     }
     catch (const std::exception& e)
     {
-        WHBLogPrintf("Server::Init failed: %s", e.what());
+        Log::Printf("Server::Init failed: %s", e.what());
         if (serverSocket != SOCKET_NULL)
         {
             close(serverSocket);
@@ -207,8 +208,7 @@ void Server::NotificationIPAddress()
 {
     char ipStr[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &ipAddress, ipStr, INET_ADDRSTRLEN);
-    std::string ipAddress = std::format("Server started on IP: {}, port: {}", ipStr, port);
-    NotificationModule_AddInfoNotification(ipAddress.c_str());
+    Notification::Info("Server started on IP: {}, port: {}", ipStr, port);
 }
 
 void Server::CloseClientSocket()
@@ -259,7 +259,7 @@ void Server::Broadcast(const std::vector<uint8_t>& data)
 // クライアントの接続待機
 void Server::AcceptThread::Main(std::stop_token token)
 {
-    NotificationModule_AddInfoNotification("Waiting for client to connect");
+    Notification::Info("Waiting for client to connect");
 
     while (!token.stop_requested())
     {
@@ -275,7 +275,7 @@ void Server::AcceptThread::Main(std::stop_token token)
                 continue;
             }
             std::string msg = std::format(" {}", errno);
-            WHBLogPrintf("Accept failed: %s", strerror(errno));
+            Log::Printf("Accept failed: %s", strerror(errno));
             continue;
         }
 
@@ -291,12 +291,9 @@ void Server::AcceptThread::Main(std::stop_token token)
 
         char ipStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(clientAddr.sin_addr), ipStr, INET_ADDRSTRLEN);
-        std::string msg = std::format("Client connected: {} Socket: {}", ipStr, clientSock);
-        NotificationModule_AddInfoNotification(msg.c_str());
+        Notification::Info("Client connected: {} Socket: {}", ipStr, clientSock);
     }
 }
-
-
 
 // スレッド
 void Server::ReceiveThread::Main(std::stop_token token)
@@ -335,7 +332,7 @@ void Server::ReceiveThread::Main(std::stop_token token)
         int ret = poll(pollfds.data(), pollfds.size(), 100);
         if (ret < 0)
         {
-            WHBLogPrintf("poll failed: errno %d (%s)", errno, strerror(errno));
+            Log::Printf("poll failed: errno %d (%s)", errno, strerror(errno));
             break;
         }
         else if (ret == 0)
@@ -354,16 +351,14 @@ void Server::ReceiveThread::Main(std::stop_token token)
 
                 if (received == 0)
                 {
-                    std::string msg = std::format("Client disconnected: Socket {}", ctx->socket);
-                    NotificationModule_AddInfoNotification(msg.c_str());
+                    Notification::Info("Client disconnected: Socket {}", ctx->socket);
                     shutdown(ctx->socket, SHUT_RDWR);
                     close(ctx->socket);
                     ctx->connected = false;
                 }
                 else if (received < 0)
                 {
-                    std::string msg = std::format("Recv error on socket {}: errno {}", ctx->socket, errno);
-                    WHBLogPrintf(msg.c_str());
+                    Log::Printf("Recv error on socket {}: errno {}", ctx->socket, errno);
                     shutdown(ctx->socket, SHUT_RDWR);
                     close(ctx->socket);
                     ctx->connected = false;
@@ -431,8 +426,7 @@ void Server::ProcessThread::Main(std::stop_token token)
         }
         catch (const std::exception& e)
         {
-            std::string msg = std::format("Processing error: {}", e.what());
-            WHBLogPrintf(msg.c_str());
+            Log::Printf("Processing error: {}", e.what());
         }
     }
 }

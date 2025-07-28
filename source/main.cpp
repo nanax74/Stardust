@@ -2,19 +2,19 @@
 #include <cstdint>
 
 // wums
-#include <notifications/notifications.h>
+#include "notification.hpp"
 
 // wups
 #include <wups.h>
 
 // wut
 #include <coreinit/launch.h>
-#include <whb/log.h>
-#include <whb/log_udp.h>
+#include <coreinit/debug.h>
 
 // stardust
 #include "exception.hpp"
 #include "server.hpp"
+#include "logger.hpp"
 
 WUPS_PLUGIN_NAME("Stardust");
 WUPS_PLUGIN_DESCRIPTION("TCPServer");
@@ -27,18 +27,17 @@ WUPS_USE_STORAGE("stardust"); // ストレージAPIの個別ID(なくても一�
 
 INITIALIZE_PLUGIN()
 {
-    NotificationModule_InitLibrary();
-    NotificationModule_SetDefaultValue(NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, NOTIFICATION_MODULE_DEFAULT_OPTION_DURATION_BEFORE_FADE_OUT, 5.0f);
+    Notification::Init();
     Exception::SetExceptionCallbacks();
 }
 
 ON_APPLICATION_START()
 {
-    WHBLogUdpInit();
+    Log::Init();
     gServer = Server::Create();
     if(!gServer)
     {
-        WHBLogPrintf("Server::Create failed!");
+        Log::Printf("Server::Create failed!");
     }
 }
 
@@ -49,5 +48,5 @@ ON_APPLICATION_REQUESTS_EXIT()
         gServer.reset();
         gServer = nullptr;
     }
-    WHBLogUdpDeinit();
+    Log::Shutdown();
 }

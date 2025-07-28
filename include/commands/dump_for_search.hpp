@@ -10,15 +10,20 @@
 #include <coreinit/memorymap.h>
 
 // wums
-#include <notifications/notifications.h>
+#include "notification.hpp"
 
 // stardust
+#include "commands/base.hpp"
 #include "packet.hpp"
 
 namespace Command
 {
-    // メモリダンプコマンド
-    void DumpForSearch(Packet& packet);
+    class DumpForSearch : public Base
+    {
+        public:
+            DumpForSearch() : Base("DumpForSearch") {}
+            void Process(Packet& packet) override;
+    };
 }
 
 namespace Memory

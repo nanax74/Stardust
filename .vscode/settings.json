@@ -74,6 +74,7 @@
         "text_encoding": "cpp",
         "queue": "cpp",
         "regex": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "ranges": "cpp"
     }
 }

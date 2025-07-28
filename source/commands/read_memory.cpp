@@ -3,7 +3,7 @@
 
 namespace Command
 {
-    void ReadMemory(Packet& packet)
+    void ReadMemory::Process(Packet& packet)
     {
         Packet response(packet.GetContext());
         response.Write<uint32_t>(std::to_underlying(ID::ReadMemory));

@@ -1,11 +1,11 @@
 #include "commands/check_search_file.hpp"
-#include "common.hpp"
+#include "commands/common.hpp"
 
 #include <filesystem>
 
 namespace Command
 {
-    void CheckSearchFile(Packet& packet)
+    void CheckSearchFile::Process(Packet& packet)
     {
         uint32_t exists = Memory::CheckSearchFile() == true ? 1 : 0;
         Packet response(packet.GetContext());

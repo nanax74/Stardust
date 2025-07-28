@@ -1,4 +1,5 @@
-#include "read_multiple_memory.hpp"
+#include "commands/read_multiple_memory.hpp"
+#include "logger.hpp"
 
 #include <vector>
 #include <whb/log.h>
@@ -9,7 +10,7 @@
 namespace Command
 {
     // 複数のメモリ領域を読み込むコマンドハンドラ
-    void ReadMultipleMemory(Packet& packet)
+    void ReadMultipleMemory::Process(Packet& packet)
     {
         CommandReceivedLogPrint("ReadMultipleMemory");
 
@@ -39,7 +40,7 @@ namespace Command
             if (total_byte_size == 0 || address == 0 || !OSIsAddressValid(address) || !OSIsAddressValid(address + total_byte_size - 1))
             {
                 isValidRange = false;
-                WHBLogPrintf("ReadMultipleMemory: Invalid address or total_byte_size or range (address: 0x%X, num_elements: %u, valueType: %u, total_byte_size: %u)", address, num_elements, static_cast<uint32_t>(valueType), total_byte_size);
+                Log::Printf("ReadMultipleMemory: Invalid address or total_byte_size or range (address: 0x%X, num_elements: %u, valueType: %u, total_byte_size: %u)", address, num_elements, static_cast<uint32_t>(valueType), total_byte_size);
             }
 
             // レスポンスにアドレス、要素数、値の型を書き込む
@@ -65,6 +66,6 @@ namespace Command
             }
         }
         response.Send(); // 構築されたレスポンスパケットをクライアントに送信
-        WHBLogPrintf("ReadMultipleMemory command finished.");
+        Log::Printf("ReadMultipleMemory command finished.");
     }
 }

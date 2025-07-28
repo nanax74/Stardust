@@ -12,15 +12,20 @@
 #include <coreinit/memorymap.h>
 
 // wums
-#include <notifications/notifications.h>
+#include "notification.hpp"
 
 // stardust
+#include "commands/base.hpp"
 #include "packet.hpp"
 
 namespace Command
 {
-    // 未知の値を検索するコマンド
-    void UnknownSearch(Packet& packet);
+    class UnknownSearch : public Base
+    {
+        public:
+            UnknownSearch() : Base("UnknownSearch") {}
+            void Process(Packet& packet) override;
+    };
 }
 
 namespace Memory

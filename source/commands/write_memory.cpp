@@ -5,7 +5,7 @@
 
 namespace Command
 {
-    void WriteMemory(Packet& packet)
+    void WriteMemory::Process(Packet& packet)
     {
         Packet response(packet.GetContext());
         response.Write<uint32_t>(std::to_underlying(ID::WriteMemory));

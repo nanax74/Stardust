@@ -1,11 +1,11 @@
 #include "commands/clear_search_file.hpp"
-#include "common.hpp"
+#include "commands/common.hpp"
 
 #include <filesystem>
 
 namespace Command
 {
-    void ClearSearchFile(Packet& packet)
+    void ClearSearchFile::Process(Packet& packet)
     {
         Memory::ClearSearchFile();
 

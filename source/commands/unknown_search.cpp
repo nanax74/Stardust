@@ -5,7 +5,7 @@
 
 namespace Command
 {
-    void UnknownSearch(Packet& packet)
+    void UnknownSearch::Process(Packet& packet)
     {
         auto context = packet.GetContext();
 

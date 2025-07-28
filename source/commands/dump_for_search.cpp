@@ -13,7 +13,7 @@ using Clock = std::chrono::steady_clock;
 
 namespace Command
 {
-    void DumpForSearch(Packet& packet)
+    void DumpForSearch::Process(Packet& packet)
     {
         Memory::SetProgressCallback([packet](float progress)
         {

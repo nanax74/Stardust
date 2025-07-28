@@ -1,7 +1,9 @@
 #pragma once
 
+#include "commands/base.hpp"
 #include "commands/common.hpp"
 #include "packet.hpp"
+#include "logger.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -13,7 +15,12 @@
 
 namespace Command
 {
-    void SpecificSearch(Packet& packet);
+    class SpecificSearch : public Base
+    {
+        public:
+            SpecificSearch() : Base("SpecificSearch") {}
+            void Process(Packet& packet) override;
+    };
 }
 
 namespace Memory
@@ -21,7 +28,7 @@ namespace Memory
     template <typename T>
     void SpecificSearch(uint32_t startAddress, uint32_t endAddress, Command::Comparison comparison, T searchValue, std::shared_ptr<SocketContext> ctx)
     {
-        WHBLogPrintf("Memory::SpecificSearch: Start=0x%X, End=0x%X, Comp=%u, Value=%f (float example)",
+        Log::Printf("Memory::SpecificSearch: Start=0x%X, End=0x%X, Comp=%u, Value=%f (float example)",
                      startAddress, endAddress, static_cast<uint32_t>(comparison), static_cast<float>(searchValue)); // Log for debugging
 
         // メタデータをロード
@@ -67,7 +74,7 @@ namespace Memory
         {
             if (!valueFile.good() || !addressFile.good())
             {
-                WHBLogPrintf("Error reading search files at entry %zu", i);
+                Log::Printf("Error reading search files at entry %zu", i);
                 break;
             }
 

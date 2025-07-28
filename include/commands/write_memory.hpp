@@ -1,5 +1,6 @@
 #pragma once
 
+#include "commands/base.hpp"
 #include "packet.hpp"
 
 #include <cstdint>
@@ -9,12 +10,16 @@
 
 #include <coreinit/memorymap.h>
 
-#include <notifications/notifications.h>
+#include "notification.hpp"
 
 namespace Command
 {
-    // メモリ書き込みコマンド
-    void WriteMemory(Packet& packet);
+    class WriteMemory : public Base
+    {
+        public:
+            WriteMemory() : Base("WriteMemory") {}
+            void Process(Packet& packet) override;
+    };
 }
 
 namespace Memory

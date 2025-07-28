@@ -11,7 +11,7 @@
 
 namespace Command
 {
-    void SpecificSearch(Packet& packet)
+    void SpecificSearch::Process(Packet& packet)
     {
         // パケットから検索パラメータを読み取る
         uint32_t startAddress = packet.Read<uint32_t>();

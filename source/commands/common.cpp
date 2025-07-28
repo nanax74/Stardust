@@ -1,4 +1,5 @@
 #include "commands/common.hpp"
+#include "logger.hpp"
 
 // std
 #include <filesystem>
@@ -71,7 +72,7 @@ namespace Command
 
     void CommandReceivedLogPrint(const char* cmd)
     {
-        WHBLogPrintf("%s command received");
+        Log::Printf("%s command received", cmd);
     }
 }
 
