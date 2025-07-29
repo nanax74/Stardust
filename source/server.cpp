@@ -367,7 +367,7 @@ void Server::ReceiveThread::Main(std::stop_token token)
                 {
                     ctx->recvBuffer.insert(ctx->recvBuffer.end(), buffer.begin(), buffer.begin() + received);
                 
-                    auto packets = Packet::ReceivePackets(ctx->recvBuffer, ctx);
+                    auto packets = Packet::ExtractPackets(ctx->recvBuffer, ctx);
                     {
                         std::lock_guard<std::mutex> queueLock(server->queueMutex);
                         for (auto& pkt : packets)

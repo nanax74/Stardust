@@ -56,6 +56,7 @@ namespace CommandDispatcher
 
     void Dispatch(Packet& packet)
     {
+        Log::Printf("{}", packet.ToString());
         if (packet.Size() < sizeof(uint32_t))
         {
             throw std::runtime_error("Packet too small to contain command ID");

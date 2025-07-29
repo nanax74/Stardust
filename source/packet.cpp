@@ -5,6 +5,8 @@
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
+#include <sstream>
+#include <iomanip>
 
 #include <sys/socket.h>
 
@@ -60,7 +62,7 @@ std::shared_ptr<SocketContext> Packet::GetContext() const
 }
 
 // バイト列から Packet を複数抽出
-std::vector<Packet> Packet::ReceivePackets(std::vector<uint8_t>& buffer, std::shared_ptr<SocketContext> ctx)
+std::vector<Packet> Packet::ExtractPackets(std::vector<uint8_t>& buffer, std::shared_ptr<SocketContext> ctx)
 {
     std::vector<Packet> packets;
 
@@ -69,8 +71,7 @@ std::vector<Packet> Packet::ReceivePackets(std::vector<uint8_t>& buffer, std::sh
         uint32_t packetSize;
         std::memcpy(&packetSize, buffer.data(), 4);
 
-        if (buffer.size() < 4 + packetSize)
-            break;
+        if (buffer.size() < 4 + packetSize) break;
 
         std::vector<uint8_t> data(buffer.begin() + 4, buffer.begin() + 4 + packetSize);
         packets.emplace_back(data, ctx);
@@ -91,22 +92,37 @@ void Packet::Send() const
     std::lock_guard<std::mutex> lock(ctx->sendMutex);
 
     uint32_t size = static_cast<uint32_t>(buffer.size());
-    std::vector<uint8_t> fullMessage;
+    std::vector<uint8_t> fullData;
 
-    fullMessage.insert(fullMessage.end(),
+    fullData.insert(fullData.end(),
                        reinterpret_cast<uint8_t*>(&size),
                        reinterpret_cast<uint8_t*>(&size) + sizeof(uint32_t));
 
     // 本体を追加
-    fullMessage.insert(fullMessage.end(), buffer.begin(), buffer.end());
+    fullData.insert(fullData.end(), buffer.begin(), buffer.end());
 
-    ssize_t sent = send(ctx->socket, fullMessage.data(), fullMessage.size(), 0);
+    ssize_t sent = send(ctx->socket, fullData.data(), fullData.size(), 0);
     if (sent < 0)
     {
         throw std::runtime_error("Failed to send response: " + std::string(strerror(errno)));
     }
-    if ((size_t)sent != fullMessage.size())
+    if ((size_t)sent != fullData.size())
     {
         throw std::runtime_error("Partial send occurred");
     }
+}
+
+std::string Packet::ToString() const
+{
+    std::ostringstream oss;
+
+    oss << "Packet [size=" << buffer.size() << "] { ";
+    for (size_t i = 0; i < buffer.size(); ++i)
+    {
+        if (i > 0) oss << ' ';
+        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(buffer[i]);
+    }
+    oss << " }";
+
+    return oss.str();
 }
