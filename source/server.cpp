@@ -89,7 +89,7 @@ bool Server::Init()
     }
     catch (const std::exception& e)
     {
-        Log::Printf("Server::Init failed: %s", e.what());
+        Log::Printf("Server::Init failed: {}", e.what());
         if (serverSocket != SOCKET_NULL)
         {
             close(serverSocket);
@@ -275,7 +275,7 @@ void Server::AcceptThread::Main(std::stop_token token)
                 continue;
             }
             std::string msg = std::format(" {}", errno);
-            Log::Printf("Accept failed: %s", strerror(errno));
+            Log::Printf("Accept failed: {}", strerror(errno));
             continue;
         }
 
@@ -321,8 +321,6 @@ void Server::ReceiveThread::Main(std::stop_token token)
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Polling interval
-
         if (pollfds.empty()) {
             // クライアントがいない場合はpollを呼び出さず、少し長めにスリープ
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -332,11 +330,12 @@ void Server::ReceiveThread::Main(std::stop_token token)
         int ret = poll(pollfds.data(), pollfds.size(), 100);
         if (ret < 0)
         {
-            Log::Printf("poll failed: errno %d (%s)", errno, strerror(errno));
+            Log::Printf("poll failed: errno {} ({})", errno, strerror(errno));
             break;
         }
         else if (ret == 0)
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Polling interval
             continue;
         }
 

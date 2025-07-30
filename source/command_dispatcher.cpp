@@ -80,7 +80,7 @@ namespace CommandDispatcher
             }
             catch (const std::exception& e)
             {
-                Log::Printf("Command handler exception: %s", e.what());
+                Log::Printf("Command handler exception: {}", e.what());
             }
             catch (...)
             {

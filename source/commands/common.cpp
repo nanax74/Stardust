@@ -72,7 +72,7 @@ namespace Command
 
     void CommandReceivedLogPrint(const char* cmd)
     {
-        Log::Printf("%s command received", cmd);
+        Log::Printf("{} command received", cmd);
     }
 }
 

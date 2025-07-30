@@ -14,7 +14,7 @@ namespace Command
 
             void Execute(Packet& packet)
             {
-                Log::Printf("[%s] received", name);
+                Log::Printf("[{}] received", name);
                 Process(packet);
             }
 
@@ -23,7 +23,7 @@ namespace Command
         protected:
             void Log(std::string msg)
             {
-                Log::Printf("[%s] {}", msg);
+                Log::Printf("[{}] {}", name, msg);
             }
 
         private:
