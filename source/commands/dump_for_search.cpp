@@ -66,5 +66,11 @@ namespace Command
         }
 
         Memory::SetProgressCallback(nullptr);
+
+        // 成功通知
+        Packet response(packet.GetContext());
+        response.Write(ID::DumpForSearch);
+        response.Write(Command::Response::Success);
+        response.Send();
     }
 }

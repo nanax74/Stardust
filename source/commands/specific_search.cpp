@@ -41,7 +41,7 @@ namespace Command
             default: throw std::runtime_error("Unsupported ValueType for SpecificSearch");
         }
 
-        // 検索完了の応答
+        // 成功通知
         Packet response(ctx);
         response.Write(ID::SpecificSearch);
         response.Write(Command::Response::Success);
