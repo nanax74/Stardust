@@ -143,8 +143,8 @@ namespace Memory
                 {
                     float progress = static_cast<float>(index) / entryCount;
 
-                    // 1.0fには達しないようにする
-                    if (progress >= 1.0f) progress = 0.999f;
+                    // 1.0fは超えないようにする
+                    if (progress > 1.0f) progress = 1.0f;
 
                     if (g_ReportProgress) g_ReportProgress(progress);
 
@@ -189,7 +189,5 @@ namespace Memory
             sendValueFile.close();
             sendAddressFile.close();
         }
-
-        if (g_ReportProgress) g_ReportProgress(1.0f);
     }
 }

@@ -66,5 +66,11 @@ namespace Command
 
         // プログレス通知解除
         Memory::SetProgressCallback(nullptr);
+
+        // 成功通知
+        Packet response(context);
+        response.Write(std::to_underlying(Command::ID::UnknownSearch));
+        response.Write(std::to_underlying(Command::Response::Success));
+        response.Send();
     }
 }

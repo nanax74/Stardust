@@ -110,11 +110,10 @@ namespace Memory
             }
         }
 
-        // Final progress update to 1.0f
+        // 成功通知
         Packet finalProgressResponse(ctx);
         finalProgressResponse.Write(Command::ID::SpecificSearch);
-        finalProgressResponse.Write(Command::Response::Progress);
-        finalProgressResponse.Write(1.0f);
+        finalProgressResponse.Write(Command::Response::Success);
         finalProgressResponse.Send();
 
         valueFile.close();
