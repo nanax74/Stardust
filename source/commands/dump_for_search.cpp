@@ -28,19 +28,35 @@ namespace Command
         uint32_t endAddress = packet.Read<uint32_t>();
         ValueType valueType = static_cast<ValueType>(packet.Read<uint32_t>());
 
-        switch(valueType)
+        if(startAddress >= endAddress)
         {
-            case ValueType::Int8: Memory::Dump<int8_t>(startAddress, endAddress); break;
-            case ValueType::UInt8: Memory::Dump<uint8_t>(startAddress, endAddress); break;
-            case ValueType::Int16: Memory::Dump<int16_t>(startAddress, endAddress); break;
-            case ValueType::UInt16: Memory::Dump<uint16_t>(startAddress, endAddress); break;
-            case ValueType::Int32: Memory::Dump<int32_t>(startAddress, endAddress); break;
-            case ValueType::UInt32: Memory::Dump<uint32_t>(startAddress, endAddress); break;
-            case ValueType::Int64: Memory::Dump<int64_t>(startAddress, endAddress); break;
-            case ValueType::UInt64: Memory::Dump<uint64_t>(startAddress, endAddress); break;
-            case ValueType::Float: Memory::Dump<float>(startAddress, endAddress); break;
-            case ValueType::Double: Memory::Dump<double>(startAddress, endAddress); break;
-            default: throw std::runtime_error("Unsupported ValueType");
+            Packet response(packet.GetContext());
+            response.Write(ID::DumpForSearch);
+            response.Write(Command::Response::Failure);
+            response.Send();
+            Log("End address is overflowing");
+        }
+
+        try
+        {
+            switch(valueType)
+            {
+                case ValueType::Int8: Memory::Dump<int8_t>(startAddress, endAddress); break;
+                case ValueType::UInt8: Memory::Dump<uint8_t>(startAddress, endAddress); break;
+                case ValueType::Int16: Memory::Dump<int16_t>(startAddress, endAddress); break;
+                case ValueType::UInt16: Memory::Dump<uint16_t>(startAddress, endAddress); break;
+                case ValueType::Int32: Memory::Dump<int32_t>(startAddress, endAddress); break;
+                case ValueType::UInt32: Memory::Dump<uint32_t>(startAddress, endAddress); break;
+                case ValueType::Int64: Memory::Dump<int64_t>(startAddress, endAddress); break;
+                case ValueType::UInt64: Memory::Dump<uint64_t>(startAddress, endAddress); break;
+                case ValueType::Float: Memory::Dump<float>(startAddress, endAddress); break;
+                case ValueType::Double: Memory::Dump<double>(startAddress, endAddress); break;
+                default: throw std::runtime_error("Unsupported ValueType");
+            }
+        }
+        catch(std::runtime_error& e)
+        {
+            Log(std::format("Error: {}", e.what()));
         }
 
         // メタデータ保存
