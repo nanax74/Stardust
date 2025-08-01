@@ -7,10 +7,10 @@ namespace Command
 {
     void CheckSearchFile::Process(Packet& packet)
     {
-        uint32_t exists = Memory::CheckSearchFile() == true ? 1 : 0;
+        Bool isExists = Memory::CheckSearchFile() == true ? Bool::True : Bool::False;
         Packet response(packet.GetContext());
         response.Write(std::to_underlying(ID::CheckSearchFile));
-        response.Write(exists);
+        response.Write(std::to_underlying(isExists));
         response.Send();
     }
 }

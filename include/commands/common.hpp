@@ -69,6 +69,12 @@ namespace Command
         Unknown = 10
     };
 
+    enum class Bool : uint32_t
+    {
+        False = 0,
+        True = 1
+    };
+
     // 型からValueTypeクラスを取得
     template <typename T>
     ValueType GetValueType()
