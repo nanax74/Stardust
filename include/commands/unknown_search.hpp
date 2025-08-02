@@ -31,22 +31,24 @@ namespace Command
 namespace Memory
 {
     template <typename T>
-    void UnknownSearch(uint32_t startAddress, uint32_t endAddress, Command::ValueType valueType, Command::Comparison comparison, std::function<void(uint32_t, T, Command::ID)> onResult = nullptr)
+    void UnknownSearch(uint32_t startAddress, uint32_t endAddress, Command::Comparison comparison)
     {
+        // エイリアス
+        using namespace std::chrono;
+        namespace fs = std::filesystem;
+
+        const size_t valueSize = sizeof(T);
+        const size_t addressSize = sizeof(uint32_t);
+
         // アドレスがオーバーフローしていたらキャンセル
         if(startAddress >= endAddress)
         {
             throw std::runtime_error("End address is overflowing");
         }
 
-        const size_t valueSize = Command::GetTypeSize(valueType);
-        const size_t addressSize = sizeof(uint32_t);
-
         // アラインメント保証
         startAddress = AlignDown(startAddress, valueSize);
         endAddress = AlignUp(endAddress, valueSize);
-
-        namespace fs = std::filesystem;
 
         fs::path basePath = fs::path(STARDUST_PATH) / "Search";
 
@@ -61,16 +63,17 @@ namespace Memory
             throw std::runtime_error("Failed to open search files");
         }
 
+        // ファイルのサイズを取得
         std::uintmax_t valueFileSize = fs::file_size(basePath / "Value.bin");
         std::uintmax_t addressFileSize = fs::file_size(basePath / "Address.bin");
 
-        // 最小のエントリ数で揃える
+        // エントリー数を取得
         const uint32_t entryCount = static_cast<uint32_t>(std::min(
             valueFileSize / valueSize,
             addressFileSize / addressSize
         ));
 
-        // 今回保存するファイルのストリーム
+        // 保存するファイルのストリーム
         std::ofstream newValueFile(basePath / "Value.tmp", std::ios::binary);
         std::ofstream newAddressFile(basePath / "Address.tmp", std::ios::binary);
         if (!newValueFile.is_open() || !newAddressFile.is_open())
@@ -79,19 +82,14 @@ namespace Memory
         }
 
         // バッファ
-        std::vector<T> valueReadBuffer;
-        valueReadBuffer.resize(THRESHOLD / valueSize);
-        std::vector<T> valueWriteBuffer;
+        std::vector<T> valueReadBuffer(THRESHOLD / valueSize);
+        std::vector<uint32_t> addressReadBuffer(THRESHOLD / addressSize);
 
-        std::vector<uint32_t> addressReadBuffer;
-        addressReadBuffer.resize(THRESHOLD / addressSize);
+        std::vector<T> valueWriteBuffer;
         std::vector<uint32_t> addressWriteBuffer;
 
         // 進捗通知用のタイマー
         auto lastReport = std::chrono::steady_clock::now();
-
-        // 結果が何件かを格納
-        uint32_t matchCount = 0;
 
         // データ全体をブロック毎に処理
         for(uint32_t index = 0; index < entryCount;) // indexは現在の要素数
@@ -100,11 +98,11 @@ namespace Memory
             const uint32_t entryCountInBlock = std::min(remaining, THRESHOLD / std::max(valueSize, addressSize)); // ブロック内の要素数
 
             // ファイル読み取り
-            valueFile.read(reinterpret_cast<char*>(valueReadBuffer.data()), valueSize * entryCountInBlock);
-            addressFile.read(reinterpret_cast<char*>(addressReadBuffer.data()), addressSize * entryCountInBlock);
+            valueFile.read(reinterpret_cast<char*>(valueReadBuffer.data()), entryCountInBlock * valueSize);
+            addressFile.read(reinterpret_cast<char*>(addressReadBuffer.data()), entryCountInBlock * addressSize);
 
             // ブロック全体を要素毎に処理
-            for(uint32_t i = 0; i < entryCountInBlock; i++, index++)
+            for(uint32_t i = 0; i < entryCountInBlock; ++i, ++index)
             {
                 const T oldValue = valueReadBuffer[i];
                 const uint32_t address = addressReadBuffer[i];
@@ -115,24 +113,11 @@ namespace Memory
                 }
 
                 // 値の読み取り
-                T newValue;
-                std::memcpy(&newValue, reinterpret_cast<const void*>(static_cast<uintptr_t>(address)), valueSize);
+                T newValue = *reinterpret_cast<const T*>(address);
 
-                bool match = false;
-                switch (comparison)
+                if(Command::CompareValues(oldValue, newValue, comparison))
                 {
-                    case Command::Comparison::Equal:         match = (newValue == oldValue); break;
-                    case Command::Comparison::NotEqual:      match = (newValue != oldValue); break;
-                    case Command::Comparison::LessThan:      match = (newValue < oldValue); break;
-                    case Command::Comparison::LessOrEqual:   match = (newValue <= oldValue); break;
-                    case Command::Comparison::GreaterThan:   match = (newValue > oldValue); break;
-                    case Command::Comparison::GreaterOrEqual:match = (newValue >= oldValue); break;
-                    default: throw std::runtime_error("Unknown comparison type");
-                }
-
-                if(match)
-                {
-                    matchCount++;
+                    (void)oldValue;
                     valueWriteBuffer.push_back(newValue);
                     addressWriteBuffer.push_back(address);
                 }
@@ -142,21 +127,21 @@ namespace Memory
                 if (now - lastReport >= std::chrono::milliseconds(100))
                 {
                     float progress = static_cast<float>(index) / entryCount;
-
-                    // 1.0fは超えないようにする
-                    if (progress > 1.0f) progress = 1.0f;
-
+                    if (progress > 1.0f) progress = 1.0f; // 1.0fは超えないようにする
                     if (g_ReportProgress) g_ReportProgress(progress);
-
                     lastReport = now;
                 }
             }
 
-            newValueFile.write(reinterpret_cast<const char*>(valueWriteBuffer.data()), valueWriteBuffer.size() * valueSize);
-            valueWriteBuffer.clear();
+            // マッチした分だけ書き出す
+            if (!valueWriteBuffer.empty() && !addressWriteBuffer.empty())
+            {
+                newValueFile.write(reinterpret_cast<const char*>(valueWriteBuffer.data()), valueWriteBuffer.size() * valueSize);
+                newAddressFile.write(reinterpret_cast<const char*>(addressWriteBuffer.data()), addressWriteBuffer.size() * addressSize);
 
-            newAddressFile.write(reinterpret_cast<const char*>(addressWriteBuffer.data()), addressWriteBuffer.size() * addressSize);
-            addressWriteBuffer.clear();
+                valueWriteBuffer.clear();
+                addressWriteBuffer.clear();
+            }
         }
 
         valueFile.close();
@@ -164,30 +149,11 @@ namespace Memory
         newValueFile.close();
         newAddressFile.close();
 
+        // 元ファイルを削除して上書き
         fs::remove(basePath / "Value.bin");
         fs::remove(basePath / "Address.bin");
 
         fs::rename(basePath / "Value.tmp", basePath / "Value.bin");
         fs::rename(basePath / "Address.tmp", basePath / "Address.bin");
-
-        if (onResult && matchCount < 10000)
-        {
-            std::ifstream sendValueFile(basePath / "Value.bin", std::ios::binary);
-            std::ifstream sendAddressFile(basePath / "Address.bin", std::ios::binary);
-
-            for (uint32_t i = 0; i < matchCount; ++i)
-            {
-                T value;
-                uint32_t address;
-
-                sendValueFile.read(reinterpret_cast<char*>(&value), sizeof(T));
-                sendAddressFile.read(reinterpret_cast<char*>(&address), sizeof(uint32_t));
-
-                onResult(address, value, Command::ID::UnknownSearch);
-            }
-
-            sendValueFile.close();
-            sendAddressFile.close();
-        }
     }
 }

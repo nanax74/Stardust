@@ -10,7 +10,9 @@
 #include <vector>
 #include <chrono>
 #include <memory> // For std::shared_ptr
-
+ 
+// wut
+#include <coreinit/memorymap.h>
 #include <whb/log.h>
 
 namespace Command
@@ -26,97 +28,129 @@ namespace Command
 namespace Memory
 {
     template <typename T>
-    void SpecificSearch(uint32_t startAddress, uint32_t endAddress, Command::Comparison comparison, T searchValue, std::shared_ptr<SocketContext> ctx)
+    void SpecificSearch(uint32_t startAddress, uint32_t endAddress, Command::Comparison comparison, T searchValue)
     {
-        Log::Printf("Memory::SpecificSearch: Start=0x%X, End=0x%X, Comp=%u, Value=%f (float example)",
-                     startAddress, endAddress, static_cast<uint32_t>(comparison), static_cast<float>(searchValue)); // Log for debugging
-
-        // メタデータをロード
-        uint32_t metaStartAddress, metaEndAddress;
-        Command::ValueType metaValueType;
-        if (!Memory::Search_LoadMeta(metaStartAddress, metaEndAddress, metaValueType))
-        {
-            throw std::runtime_error("Failed to load search meta data");
-        }
-
-        // Check if the dumped data type matches the search type
-        if (metaValueType != Command::GetValueType<T>())
-        {
-            throw std::runtime_error("ValueType mismatch between search and dumped data");
-        }
-
+        // エイリアス
+        using namespace std::chrono;
         namespace fs = std::filesystem;
-        fs::path basePath = fs::path(Memory::STARDUST_PATH) / "Search";
+
+        const size_t valueSize = sizeof(T);
+        const size_t addressSize = sizeof(uint32_t);
+
+        // アドレスがオーバーフローしていたらキャンセル
+        if(startAddress >= endAddress)
+        {
+            throw std::runtime_error("End address is overflowing");
+        }
+
+        // アラインメント保証
+        startAddress = AlignDown(startAddress, valueSize);
+        endAddress = AlignUp(endAddress, valueSize);
+
+        fs::path basePath = fs::path(STARDUST_PATH) / "Search";
+
+        // ディレクトリの存在保証
+        fs::create_directories(basePath);
+        
+        // 前回保存したファイルのストリーム
         std::ifstream valueFile(basePath / "Value.bin", std::ios::binary);
         std::ifstream addressFile(basePath / "Address.bin", std::ios::binary);
-
         if (!valueFile.is_open() || !addressFile.is_open())
         {
-            throw std::runtime_error("Failed to open Value.bin or Address.bin");
+            throw std::runtime_error("Failed to open search files");
         }
 
-        size_t typeSize = Command::GetTypeSize(Command::GetValueType<T>());
-        size_t numEntries = (metaEndAddress - metaStartAddress) / typeSize;
+        // ファイルのサイズを取得
+        std::uintmax_t valueFileSize = fs::file_size(basePath / "Value.bin");
+        std::uintmax_t addressFileSize = fs::file_size(basePath / "Address.bin");
 
-        // Seek to the correct starting position in the files based on startAddress
-        // Assuming the files are ordered by address and start from metaStartAddress
-        size_t startIndex = (startAddress - metaStartAddress) / typeSize;
-        if (startIndex > numEntries) startIndex = numEntries; // Cap at numEntries
+        // エントリー数を取得
+        const uint32_t entryCount = static_cast<uint32_t>(std::min(
+            valueFileSize / valueSize,
+            addressFileSize / addressSize
+        ));
 
-        valueFile.seekg(startIndex * typeSize, std::ios::beg);
-        addressFile.seekg(startIndex * sizeof(uint32_t), std::ios::beg);
-
-        // Progress reporting
-        auto lastReport = std::chrono::steady_clock::now();
-        size_t processedEntries = 0;
-
-        for (size_t i = startIndex; i < numEntries; ++i)
+        // 保存するファイルのストリーム
+        std::ofstream newValueFile(basePath / "Value.tmp", std::ios::binary);
+        std::ofstream newAddressFile(basePath / "Address.tmp", std::ios::binary);
+        if (!newValueFile.is_open() || !newAddressFile.is_open())
         {
-            if (!valueFile.good() || !addressFile.good())
+            throw std::runtime_error("Failed to open temporary search files");
+        }
+
+        // バッファ
+        std::vector<T> valueReadBuffer(THRESHOLD / valueSize);
+        std::vector<uint32_t> addressReadBuffer(THRESHOLD / addressSize);
+
+        std::vector<T> valueWriteBuffer;
+        std::vector<uint32_t> addressWriteBuffer;
+
+        // 進捗通知用のタイマー
+        auto lastReport = steady_clock::now();
+
+        // データ全体をブロック毎に処理
+        for (uint32_t index = 0; index < entryCount;) // indexは現在の要素数
+        {
+            const uint32_t remaining = entryCount - index;
+            const uint32_t entriesInBlock = std::min(remaining, static_cast<uint32_t>(THRESHOLD / std::max(valueSize, addressSize)));
+
+            // ファイル読み取り
+            valueFile.read(reinterpret_cast<char*>(valueReadBuffer.data()), entriesInBlock * valueSize);
+            addressFile.read(reinterpret_cast<char*>(addressReadBuffer.data()), entriesInBlock * addressSize);
+
+            // ブロック全体を要素毎に処理
+            for (uint32_t i = 0; i < entriesInBlock; ++i, ++index)
             {
-                Log::Printf("Error reading search files at entry %zu", i);
-                break;
-            }
+                const T oldValue = valueReadBuffer[i];
+                const uint32_t address = addressReadBuffer[i];
 
-            T currentValue;
-            uint32_t currentAddress;
-
-            valueFile.read(reinterpret_cast<char*>(&currentValue), typeSize);
-            addressFile.read(reinterpret_cast<char*>(&currentAddress), sizeof(uint32_t));
-
-            // Check if the current address is within the requested range
-            if (currentAddress >= startAddress && currentAddress < endAddress)
-            {
-                if (Command::CompareValues(currentValue, searchValue, comparison))
+                if(!OSIsAddressValid(address))
                 {
-                    // Match found, send to Vortex
-                    Memory::SendSearchResult<T>(currentAddress, currentValue, Command::ID::SpecificSearch, ctx);
+                    continue;
+                }
+
+                // 値の読み取り
+                T newValue = *reinterpret_cast<const T*>(address);
+
+                if (Command::CompareValues(searchValue, newValue, comparison))
+                {
+                    (void)oldValue;
+                    valueWriteBuffer.push_back(newValue);
+                    addressWriteBuffer.push_back(address);
+                }
+
+                // 進捗報告
+                const auto now = steady_clock::now();
+                if (now - lastReport >= milliseconds(100))
+                {
+                    float progress = static_cast<float>(index) / entryCount;
+                    if (progress > 1.0f) progress = 1.0f; // 1.0fは超えないようにする
+                    if (g_ReportProgress) g_ReportProgress(progress);
+                    lastReport = now;
                 }
             }
 
-            processedEntries++;
-
-            // Progress reporting
-            auto now = std::chrono::steady_clock::now();
-            if (now - lastReport >= std::chrono::milliseconds(100))
+            // マッチした分だけ書き出す
+            if (!valueWriteBuffer.empty() && !addressWriteBuffer.empty())
             {
-                float progress = static_cast<float>(processedEntries) / (numEntries - startIndex);
-                Packet response(ctx);
-                response.Write(Command::ID::SpecificSearch);
-                response.Write(Command::Response::Progress);
-                response.Write(progress);
-                response.Send();
-                lastReport = now;
+                newValueFile.write(reinterpret_cast<const char*>(valueWriteBuffer.data()), valueWriteBuffer.size() * valueSize);
+                newAddressFile.write(reinterpret_cast<const char*>(addressWriteBuffer.data()), addressWriteBuffer.size() * addressSize);
+
+                valueWriteBuffer.clear();
+                addressWriteBuffer.clear();
             }
         }
 
-        // 成功通知
-        Packet finalProgressResponse(ctx);
-        finalProgressResponse.Write(Command::ID::SpecificSearch);
-        finalProgressResponse.Write(Command::Response::Success);
-        finalProgressResponse.Send();
-
         valueFile.close();
         addressFile.close();
+        newValueFile.close();
+        newAddressFile.close();
+
+        // 元ファイルを削除して上書き
+        fs::remove(basePath / "Value.bin");
+        fs::remove(basePath / "Address.bin");
+
+        fs::rename(basePath / "Value.tmp", basePath / "Value.bin");
+        fs::rename(basePath / "Address.tmp", basePath / "Address.bin");
     }
 }

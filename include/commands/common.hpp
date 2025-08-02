@@ -27,6 +27,8 @@ namespace Command
         UnknownSearch = 0x12,
         ClearSearchFile = 0x13,
         CheckSearchFile = 0x14,
+        GetSearchResults = 0x15,
+        GetSearchResultsCount = 0x16,
 
         // 応答要求(切断検出用)
         Respond = 0x1000,
@@ -42,6 +44,12 @@ namespace Command
         Success = 0x1,
         Progress = 0x2,
         Data = 0x3
+    };
+
+    enum class SearchResult : uint32_t
+    {
+        Count = 0x0,
+        Result = 0x1
     };
 
     enum class Comparison : uint32_t
@@ -157,8 +165,9 @@ namespace Memory
     void SendSearchResult(uint32_t address, T value, Command::ID cmd, std::shared_ptr<SocketContext>& context)
     {
         Packet response(context);
-        response.Write(std::to_underlying(cmd));
-        response.Write(std::to_underlying(Command::Response::Data));
+        response.Write(cmd);
+        response.Write(Command::Response::Data);
+        response.Write(Command::SearchResult::Result);
         response.Write(address);
         response.Write(value);
         response.Send();

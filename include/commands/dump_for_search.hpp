@@ -32,28 +32,31 @@ namespace Memory
     template <typename T>
     void Dump(uint32_t startAddress, uint32_t endAddress)
     {
+        // エイリアス
+        using namespace std::chrono;
+        namespace fs = std::filesystem;
+
+        const size_t valueSize = sizeof(T);
+
         // アドレスがオーバーフローしていたらキャンセル
         if(startAddress >= endAddress)
         {
             throw std::runtime_error("End address is overflowing");
         }
 
-        size_t valueSize = sizeof(T);
-
         // アラインメント保証
         startAddress = AlignDown(startAddress, valueSize);
         endAddress = AlignUp(endAddress, valueSize);
-
-        uint32_t dumpSize = endAddress - startAddress;
-
-        namespace fs = std::filesystem;
 
         fs::path basePath = fs::path(STARDUST_PATH) / "Search";
 
         // ディレクトリの存在保証
         fs::create_directories(basePath);
 
-        // ファイルに書き込むためのストリーム
+        // ダンプするサイズを取得
+        uint32_t dumpSize = endAddress - startAddress;
+
+        // 保存するファイルのストリーム
         std::ofstream valueFile(basePath / "Value.bin", std::ios::binary);
         std::ofstream addressFile(basePath / "Address.bin", std::ios::binary);
         if (!valueFile.is_open() || !addressFile.is_open())
@@ -119,7 +122,8 @@ namespace Memory
         }
 
         // ヘルパーラムダ: バッファをファイルに書き込み、クリアする
-        auto writeAndClearBuffer = [&](auto& buffer, auto& file, size_t elementSize) {
+        auto writeAndClearBuffer = [&](auto& buffer, auto& file, size_t elementSize)
+        {
             if (!buffer.empty()) {
                 file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * elementSize);
                 buffer.clear();

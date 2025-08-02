@@ -18,6 +18,8 @@
 #include "commands/unknown_search.hpp"
 #include "commands/clear_search_file.hpp"
 #include "commands/check_search_file.hpp"
+#include "commands/get_search_results.hpp"
+#include "commands/get_search_results_count.hpp"
 #include "commands/respond.hpp"
 
 std::unordered_map<Command::ID, std::shared_ptr<Command::Base>> handlers;
@@ -49,6 +51,12 @@ namespace CommandDispatcher
 
         // サーチ関係のファイルの有無を確認
         handlers[Command::ID::CheckSearchFile] = std::make_shared<Command::CheckSearchFile>();
+
+        // サーチ結果を取得
+        handlers[Command::ID::GetSearchResults] = std::make_shared<Command::GetSearchResults>();
+
+        // サーチ結果の数を取得
+        handlers[Command::ID::GetSearchResultsCount] = std::make_shared<Command::GetSearchResultsCount>();
 
         // 応答を返すだけ
         handlers[Command::ID::Respond] = std::make_shared<Command::Respond>();
