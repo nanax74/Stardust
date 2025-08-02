@@ -167,7 +167,6 @@ namespace Memory
         Packet response(context);
         response.Write(cmd);
         response.Write(Command::Response::Data);
-        response.Write(Command::SearchResult::Result);
         response.Write(address);
         response.Write(value);
         response.Send();

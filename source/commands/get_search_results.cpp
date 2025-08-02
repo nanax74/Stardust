@@ -30,16 +30,16 @@ namespace Command
         {
             switch (valueType)
             {
-                case ValueType::Int8   : Memory::GetSearchResults<int8_t>  (startAddress, endAddress, callbackInt8  ); break;
-                case ValueType::UInt8  : Memory::GetSearchResults<uint8_t> (startAddress, endAddress, callbackUInt8 ); break;
-                case ValueType::Int16  : Memory::GetSearchResults<int16_t> (startAddress, endAddress, callbackInt16 ); break;
-                case ValueType::UInt16 : Memory::GetSearchResults<uint16_t>(startAddress, endAddress, callbackUInt16); break;
-                case ValueType::Int32  : Memory::GetSearchResults<int32_t> (startAddress, endAddress, callbackInt32 ); break;
-                case ValueType::UInt32 : Memory::GetSearchResults<uint32_t>(startAddress, endAddress, callbackUInt32); break;
-                case ValueType::Int64  : Memory::GetSearchResults<int64_t> (startAddress, endAddress, callbackInt64 ); break;
-                case ValueType::UInt64 : Memory::GetSearchResults<uint64_t>(startAddress, endAddress, callbackUInt64); break;
-                case ValueType::Float  : Memory::GetSearchResults<float>   (startAddress, endAddress, callbackFloat ); break;
-                case ValueType::Double : Memory::GetSearchResults<double>  (startAddress, endAddress, callbackDouble); break;
+                case ValueType::Int8   : Memory::GetSearchResults<int8_t>  (callbackInt8  ); break;
+                case ValueType::UInt8  : Memory::GetSearchResults<uint8_t> (callbackUInt8 ); break;
+                case ValueType::Int16  : Memory::GetSearchResults<int16_t> (callbackInt16 ); break;
+                case ValueType::UInt16 : Memory::GetSearchResults<uint16_t>(callbackUInt16); break;
+                case ValueType::Int32  : Memory::GetSearchResults<int32_t> (callbackInt32 ); break;
+                case ValueType::UInt32 : Memory::GetSearchResults<uint32_t>(callbackUInt32); break;
+                case ValueType::Int64  : Memory::GetSearchResults<int64_t> (callbackInt64 ); break;
+                case ValueType::UInt64 : Memory::GetSearchResults<uint64_t>(callbackUInt64); break;
+                case ValueType::Float  : Memory::GetSearchResults<float>   (callbackFloat ); break;
+                case ValueType::Double : Memory::GetSearchResults<double>  (callbackDouble); break;
                 default: throw std::runtime_error("Unsupported ValueType for SpecificSearch");
             }
 
