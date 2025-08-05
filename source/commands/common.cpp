@@ -69,11 +69,6 @@ namespace Command
         response.Write<uint32_t>(std::to_underlying(Response::Success)); // 成功応答
         response.Send();
     }
-
-    void CommandReceivedLogPrint(const char* cmd)
-    {
-        Log::Printf("{} command received", cmd);
-    }
 }
 
 namespace Memory
