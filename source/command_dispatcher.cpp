@@ -22,44 +22,53 @@
 #include "commands/get_search_results_count.hpp"
 #include "commands/respond.hpp"
 
-std::unordered_map<Command::ID, std::shared_ptr<Command::Base>> handlers;
+#include "commands/subscribe_address.hpp"
+#include "commands/unsubscribe_address.hpp"
+
+std::unordered_map<Command::ClientCommand, std::shared_ptr<Command::Base>> handlers;
 
 namespace CommandDispatcher
 {
     void RegisterHandlers()
     {
         // メモリ書き込み
-        handlers[Command::ID::WriteMemory] = std::make_shared<Command::WriteMemory>();
+        handlers[Command::ClientCommand::WriteMemory] = std::make_shared<Command::WriteMemory>();
 
         // メモリ読み込み
-        handlers[Command::ID::ReadMemory] = std::make_shared<Command::ReadMemory>();
+        handlers[Command::ClientCommand::ReadMemory] = std::make_shared<Command::ReadMemory>();
 
         // 複数メモリ読み込み
-        handlers[Command::ID::ReadMultipleMemory] = std::make_shared<Command::ReadMultipleMemory>();
+        handlers[Command::ClientCommand::ReadMultipleMemory] = std::make_shared<Command::ReadMultipleMemory>();
 
         // メモリダンプ
-        handlers[Command::ID::DumpForSearch] = std::make_shared<Command::DumpForSearch>();
+        handlers[Command::ClientCommand::DumpForSearch] = std::make_shared<Command::DumpForSearch>();
 
         // 既知の値検索
-        handlers[Command::ID::SpecificSearch] = std::make_shared<Command::SpecificSearch>();
+        handlers[Command::ClientCommand::SpecificSearch] = std::make_shared<Command::SpecificSearch>();
 
         // 未知の値検索
-        handlers[Command::ID::UnknownSearch] = std::make_shared<Command::UnknownSearch>();
+        handlers[Command::ClientCommand::UnknownSearch] = std::make_shared<Command::UnknownSearch>();
 
         // サーチ関係のファイルを消去
-        handlers[Command::ID::ClearSearchFile] = std::make_shared<Command::ClearSearchFile>();
+        handlers[Command::ClientCommand::ClearSearchFile] = std::make_shared<Command::ClearSearchFile>();
 
         // サーチ関係のファイルの有無を確認
-        handlers[Command::ID::CheckSearchFile] = std::make_shared<Command::CheckSearchFile>();
+        handlers[Command::ClientCommand::CheckSearchFile] = std::make_shared<Command::CheckSearchFile>();
 
         // サーチ結果を取得
-        handlers[Command::ID::GetSearchResults] = std::make_shared<Command::GetSearchResults>();
+        handlers[Command::ClientCommand::GetSearchResults] = std::make_shared<Command::GetSearchResults>();
 
         // サーチ結果の数を取得
-        handlers[Command::ID::GetSearchResultsCount] = std::make_shared<Command::GetSearchResultsCount>();
+        handlers[Command::ClientCommand::GetSearchResultsCount] = std::make_shared<Command::GetSearchResultsCount>();
 
         // 応答を返すだけ
-        handlers[Command::ID::Respond] = std::make_shared<Command::Respond>();
+        handlers[Command::ClientCommand::Respond] = std::make_shared<Command::Respond>();
+        
+        // 監視アドレスを登録
+        handlers[Command::ClientCommand::SubscribeAddress] = std::make_shared<Command::SubscribeAddress>();
+
+        // 監視アドレスの登録を解除
+        handlers[Command::ClientCommand::UnsubscribeAddress] = std::make_shared<Command::UnsubscribeAddress>();
     }
 
     void Dispatch(Packet& packet)
@@ -70,7 +79,7 @@ namespace CommandDispatcher
             throw std::runtime_error("Packet too small to contain command ID");
         }
 
-        Command::ID cmd = static_cast<Command::ID>(packet.Read<uint32_t>());
+        Command::ClientCommand cmd = static_cast<Command::ClientCommand>(packet.Read<uint32_t>());
         auto it = handlers.find(cmd);
         if (it == handlers.end())
         {

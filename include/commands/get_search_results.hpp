@@ -21,7 +21,7 @@ namespace Memory
     // startIndex: 取得するサーチ結果の開始インデックス
     // count: 取得するサーチ結果の数
     template <typename T>
-    void GetSearchResults(const std::function<void(uint32_t, T, Command::ID)>& onResult)
+    void GetSearchResults(const std::function<void(uint32_t, T, Command::ClientCommand)>& onResult)
     {
         if (!onResult) return;
 
@@ -57,7 +57,7 @@ namespace Memory
 
         for (size_t i = 0; i < entryCount; ++i)
         {
-            onResult(addressBuffer[i], valueBuffer[i], Command::ID::GetSearchResults);
+            onResult(addressBuffer[i], valueBuffer[i], Command::ClientCommand::GetSearchResults);
         }
     }
 }

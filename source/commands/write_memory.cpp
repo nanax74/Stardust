@@ -8,7 +8,7 @@ namespace Command
     void WriteMemory::Process(Packet& packet)
     {
         Packet response(packet.GetContext());
-        response.Write(ID::WriteMemory);
+        response.Write(ClientCommand::WriteMemory);
 
         if (packet.Size() < sizeof(uint32_t) * 2)
         {

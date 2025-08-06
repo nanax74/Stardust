@@ -9,7 +9,7 @@ namespace Command
     {
         Bool isExists = Memory::CheckSearchFile() == true ? Bool::True : Bool::False;
         Packet response(packet.GetContext());
-        response.Write(std::to_underlying(ID::CheckSearchFile));
+        response.Write(std::to_underlying(ClientCommand::CheckSearchFile));
         response.Write(std::to_underlying(isExists));
         response.Send();
     }

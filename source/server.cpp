@@ -295,6 +295,8 @@ void Server::AcceptThread::Main(std::stop_token token)
     }
 }
 
+#include "subscribed_address.hpp"
+
 // スレッド
 void Server::ReceiveThread::Main(std::stop_token token)
 {
@@ -354,6 +356,7 @@ void Server::ReceiveThread::Main(std::stop_token token)
                     shutdown(ctx->socket, SHUT_RDWR);
                     close(ctx->socket);
                     ctx->connected = false;
+                    ClearSubscribedAddresses(ctx);
                 }
                 else if (received < 0)
                 {
@@ -361,6 +364,7 @@ void Server::ReceiveThread::Main(std::stop_token token)
                     shutdown(ctx->socket, SHUT_RDWR);
                     close(ctx->socket);
                     ctx->connected = false;
+                    ClearSubscribedAddresses(ctx);
                 }
                 else
                 {

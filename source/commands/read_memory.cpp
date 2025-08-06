@@ -6,7 +6,7 @@ namespace Command
     void ReadMemory::Process(Packet& packet)
     {
         Packet response(packet.GetContext());
-        response.Write<uint32_t>(std::to_underlying(ID::ReadMemory));
+        response.Write<uint32_t>(std::to_underlying(ClientCommand::ReadMemory));
 
         if (packet.Size() < sizeof(uint32_t) * 2)
         {

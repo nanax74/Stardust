@@ -21,7 +21,7 @@ namespace Command
         Memory::SetProgressCallback([context](float progress)
         {
             Packet response(context);
-            response.Write(ID::DumpForSearch);
+            response.Write(ClientCommand::DumpForSearch);
             response.Write(Command::Response::Progress);
             response.Write(progress);
             response.Send();
@@ -64,7 +64,7 @@ namespace Command
 
         // 成功通知
         Packet response(packet.GetContext());
-        response.Write(ID::DumpForSearch);
+        response.Write(ClientCommand::DumpForSearch);
         response.Write(Command::Response::Success);
         response.Send();
     }

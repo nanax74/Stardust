@@ -44,7 +44,7 @@ namespace Command
             }
 
             Packet packet(context);
-            packet.Write(Command::ID::GetSearchResults);
+            packet.Write(Command::ClientCommand::GetSearchResults);
             packet.Write(Command::Response::Success);
             packet.Send();
         }
@@ -53,7 +53,7 @@ namespace Command
             Log("Failed to get current search results");
 
             Packet packet(context);
-            packet.Write(Command::ID::GetSearchResults);
+            packet.Write(Command::ClientCommand::GetSearchResults);
             packet.Write(Command::Response::Failure);
             packet.Send();
         }

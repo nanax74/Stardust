@@ -35,7 +35,7 @@ namespace Command
             }
 
             Packet packet(context);
-            packet.Write(Command::ID::GetSearchResultsCount);
+            packet.Write(Command::ClientCommand::GetSearchResultsCount);
             packet.Write(Command::Response::Success);
             packet.Write(count);
             packet.Send();
@@ -45,7 +45,7 @@ namespace Command
             Log("Failed to get current search results");
 
             Packet packet(context);
-            packet.Write(Command::ID::GetSearchResultsCount);
+            packet.Write(Command::ClientCommand::GetSearchResultsCount);
             packet.Write(Command::Response::Failure);
             packet.Send();
         }

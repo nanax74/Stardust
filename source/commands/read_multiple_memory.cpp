@@ -20,7 +20,7 @@ namespace Command
 
         // クライアントへ返信するレスポンスパケットを初期化
         Packet response(context);
-        response.Write(Command::ID::ReadMultipleMemory); // コマンドID
+        response.Write(Command::ClientCommand::ReadMultipleMemory); // コマンドID
         response.Write(Command::Response::Data);         // 応答タイプ:データ
         response.Write(valueType);                       // 値の型
         response.Write(addressesCount);                  // 値の数

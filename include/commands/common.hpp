@@ -14,7 +14,7 @@
 namespace Command
 {
     // コマンドID
-    enum class ID : uint32_t
+    enum class ClientCommand : uint32_t
     {
         // メモリ読み書き
         WriteMemory = 0x0,
@@ -29,12 +29,19 @@ namespace Command
         CheckSearchFile = 0x14,
         GetSearchResults = 0x15,
         GetSearchResultsCount = 0x16,
+        SubscribeAddress = 0x17,
+        UnsubscribeAddress = 0x18,
 
         // 応答要求(切断検出用)
         Respond = 0x1000,
 
         // ダミー
         Dummy = 0xFFFFFFFF
+    };
+
+    enum class ServerCommand : uint32_t
+    {
+        PushAddressValue = 0x10000
     };
 
     // 応答
@@ -162,11 +169,11 @@ namespace Memory
     }
 
     template <typename T>
-    void SendSearchResult(uint32_t address, T value, Command::ID cmd, std::shared_ptr<SocketContext>& context)
+    void SendSearchResult(uint32_t address, T value, Command::ClientCommand cmd, std::shared_ptr<SocketContext>& context)
     {
         Packet response(context);
-        response.Write(cmd);
-        response.Write(Command::Response::Data);
+        response.Write(static_cast<uint32_t>(cmd));
+        response.Write(static_cast<uint32_t>(Command::Response::Data));
         response.Write(address);
         response.Write(value);
         response.Send();
@@ -175,9 +182,10 @@ namespace Memory
     template <typename T>
     auto MakeSendSearchResultCallback(std::shared_ptr<SocketContext>& socket)
     {
-        return [&socket](uint32_t address, T value, Command::ID cmd)
+        return [&socket](uint32_t address, T value, Command::ClientCommand cmd)
         {
             SendSearchResult<T>(address, value, cmd, socket);
         };
     }
 }
+
