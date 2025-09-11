@@ -33,10 +33,10 @@ CXXFLAGS   := $(CFLAGS) -std=c++23
 ASFLAGS    := -g $(ARCH) -mregnames
 LDFLAGS    := -g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS)
 
-LIBS       := -lwups -lwut -lnotifications
+LIBS       := -lStardust -lwups -lwut -lnotifications
 
 # ライブラリのルートディレクトリ
-LIBDIRS    := $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT)
+LIBDIRS    := $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUMS_ROOT) $(WUT_ROOT)/usr
 
 #===============================================================================
 # ビルドルール（BUILDディレクトリでビルド実行）
@@ -90,6 +90,9 @@ $(BUILD):
 clean:
 	@echo cleaning ...
 	@rm -fr $(BUILD) $(TARGET).wps $(TARGET).elf
+
+send:
+	WIILOAD=tcp:192.168.68.201 wiiload $(TARGET).wps
 
 #===============================================================================
 else  # $(BUILD) ディレクトリでの処理
