@@ -1,62 +1,35 @@
-// wut
-#include <arpa/inet.h> // WiiUのIPアドレスを取得
-
 // Stardust-Lib
-#include <Stardust/TCPServer.hpp>
+#include <StardustLib/MessageServer.hpp>
 
 // Stardust
 #include "Stardust.hpp"
 #include "notification.hpp"
 #include "logger.hpp"
 
-std::unique_ptr<Stardust> gStardust = nullptr;
+// messages
+#include "Messages/Ping.hpp"
+#include "Messages/Pong.hpp"
 
-void Stardust::recvCallback(const StardustLib::TCPServer::Packet& data)
+namespace Stardust
 {
-    Notification::Info("Data received. Client ID: {}, Size: {}", data.clientId, data.data.size());
-}
-
-void Stardust::disconnectCallback(uint64_t clientId)
-{
-    Notification::Info("Client disconnected with ID: {}", clientId);
-}
-
-void Stardust::serverIPAddressCallback(uint32_t ipAddress)
-{
-    struct in_addr addr;
-    addr.s_addr = ipAddress;
-
-    char ipStr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &addr, ipStr, INET_ADDRSTRLEN);
+    std::unique_ptr<Stardust> gStardust = nullptr;
     
-    Notification::Info("Server started on IP: {}, Port: {}", ipStr, port);
-}
-
-void Stardust::clientIPAddressCallback(uint32_t ipAddress, uint64_t id)
-{
-    struct in_addr addr;
-    addr.s_addr = ipAddress;
-
-    char ipStr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &addr, ipStr, INET_ADDRSTRLEN);
-
-    Notification::Info("Client connected on IP: {}, Port: {}, ID: {}", ipStr, port, id);
-}
-
-void Stardust::initialize()
-{
-    if(!server)
+    constexpr uint16_t MSG_TYPE_PING = 1;
+    constexpr uint16_t MSG_TYPE_PONG = 2;
+    
+    void Stardust::initialize()
     {
-        server = std::make_unique<StardustLib::TCPServer>(port);
-        server->setRecvCallback([this](const StardustLib::TCPServer::Packet& data){ recvCallback(data); });
-        server->setDisconnectCallback([this](uint64_t clientId){ disconnectCallback(clientId); });
-        server->setServerIPAddressCallback([this](int ipAddress){ serverIPAddressCallback(ipAddress); });
-        server->setClientIPAddressCallback([this](int ipAddress, uint64_t id){ clientIPAddressCallback(ipAddress, id); });
+        if(!server)
+        {
+            server = std::make_unique<StardustLib::MessageServer>(port);
+            server->registerType<Ping>(MSG_TYPE_PING);
+            server->registerType<Pong>(MSG_TYPE_PONG);
+        }
+        server->start();
     }
-    server->start();
-}
-
-void Stardust::shutdown()
-{
-    if(server) server->stop();
+    
+    void Stardust::shutdown()
+    {
+        if(server) server->stop();
+    }
 }

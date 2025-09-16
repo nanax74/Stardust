@@ -92,7 +92,7 @@ clean:
 	@rm -fr $(BUILD) $(TARGET).wps $(TARGET).elf
 
 send:
-	WIILOAD=tcp:192.168.68.201 wiiload $(TARGET).wps
+	./send.sh $(TARGET).wps
 
 #===============================================================================
 else  # $(BUILD) ディレクトリでの処理

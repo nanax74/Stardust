@@ -29,25 +29,25 @@ INITIALIZE_PLUGIN()
 {
     Notification::Init();
     Exception::SetExceptionCallbacks();
-    gStardust = std::make_unique<Stardust>();
+    Stardust::gStardust = std::make_unique<Stardust::Stardust>();
 }
 
 ON_APPLICATION_START()
 {
     Log::Init();
-    if(!gStardust)
+    if(!Stardust::gStardust)
     {
         Log::Printf("Server::Create failed!");
         return;
     }
-    gStardust->initialize();
+    Stardust::gStardust->initialize();
 }
 
 ON_APPLICATION_REQUESTS_EXIT()
 {
-    if (gStardust)
+    if (Stardust::gStardust)
     {
-        gStardust->shutdown();
+        Stardust::gStardust->shutdown();
     }
     Log::Shutdown();
 }
